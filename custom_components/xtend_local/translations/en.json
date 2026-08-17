@@ -1,0 +1,18 @@
+{
+  "title": "Intergas Local",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Intergas Local",
+        "description": "Enter the IP address or host of your Intergas device. The integration adds the required Xtend/Xtreme API query automatically.",
+        "data": {
+          "host": "IP address or host",
+          "scan_interval": "Scan interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_host": "The host is invalid. Use an IP address or hostname without a path."
+    }
+  }
+}

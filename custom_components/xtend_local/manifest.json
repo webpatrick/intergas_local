@@ -1,0 +1,11 @@
+{
+  "domain": "intergas_local",
+  "name": "Intergas Local",
+  "version": "1.0.0",
+  "documentation": "https://example.local/xtend_local",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": [],
+  "config_flow": true,
+  "iot_class": "local_polling"
+}
