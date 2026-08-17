@@ -19,7 +19,7 @@ class XtendDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         super().__init__(
             hass,
             _LOGGER,
-            name="xtend_local",
+            name="intergas_local",
             update_interval=timedelta(seconds=scan_interval),
         )
         self.resource = resource

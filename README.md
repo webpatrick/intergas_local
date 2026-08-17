@@ -108,20 +108,20 @@ Direct repository URL for HACS custom repository:
 3. Open Integrations
 4. Click the menu button and choose Custom repositories
 5. Add this repository URL
-6. Search for Xtend Local
+6. Search for Intergas Local
 7. Install the integration
 8. Restart Home Assistant
 
 ### Manual installation
 
 1. Download or clone this repository
-2. Copy the `custom_components/xtend_local` directory into your Home Assistant `custom_components` folder
+2. Copy the `custom_components/intergas_local` directory into your Home Assistant `custom_components` folder
 3. Restart Home Assistant
 
 ## Configuration
 
 1. Go to Settings > Devices & Services > Add Integration
-2. Search for Xtend Local
+2. Search for Intergas Local
 3. Enter the Xtend host or local IP address
 4. Optionally adjust the polling interval
 5. Save the configuration

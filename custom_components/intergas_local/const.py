@@ -1,4 +1,4 @@
-DOMAIN = "xtend_local"
+DOMAIN = "intergas_local"
 DEFAULT_SCAN_INTERVAL = 120
 
 ERROR_CODES = {
