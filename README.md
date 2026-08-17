@@ -97,6 +97,12 @@ These are based on the delta between supply and return temperatures and indicate
 
 ### HACS (recommended)
 
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=webpatrick&repository=intergas_local&category=integration)
+
+Direct repository URL for HACS custom repository:
+
+`https://github.com/webpatrick/intergas_local`
+
 1. Open Home Assistant
 2. Go to HACS
 3. Open Integrations

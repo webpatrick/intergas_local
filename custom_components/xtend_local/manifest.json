@@ -2,7 +2,7 @@
   "domain": "intergas_local",
   "name": "Intergas Local",
   "version": "1.0.0",
-  "documentation": "https://example.local/xtend_local",
+  "documentation": "https://github.com/webpatrick/intergas_local",
   "requirements": [],
   "dependencies": [],
   "codeowners": [],
