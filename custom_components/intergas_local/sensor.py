@@ -147,8 +147,6 @@ def _friendly_sensor_name(name: str) -> str:
         "delta t": "Delta T",
         "delta": "Delta",
         "eev": "EEV",
-        "ch": "CH",
-        "ot": "OT",
         "opentherm": "OpenTherm",
         "hp": "Heat pump",
         "thp": "Heat pump",
