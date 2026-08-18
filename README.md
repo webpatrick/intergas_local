@@ -12,88 +12,15 @@ It is designed for setups where the heat pump is only reachable on its own local
 
 The Intergas Xtend system exposes operational data through a local API on the unit. This integration polls that API directly and exposes the most relevant system values in Home Assistant as entities.
 
-This is a local-only integration:
-
-- no cloud dependency
-- no vendor app required
-- no external API token needed
-- no polling through a remote service
-
 ## Important: dedicated Wi‑Fi requirement
 
-For Xtend installations, Home Assistant often needs to be connected to a separate Wi‑Fi network or use a dedicated USB Wi‑Fi adapter.
+For Xtend installations, Home Assistant needs to be connected to the local accespoint of the Xtend using a dedicated Wi‑Fi adapter.
 
-This is important because the Xtend controller is typically reachable only through a dedicated local network, not through the normal home network. In practice that means:
-
-- HA should have access to the Xtend controller via a second Wi‑Fi interface or a dedicated SSID / subnet
-- the main home network and the Xtend network should not be competing for the same interface
-- the unit IP should be reachable from Home Assistant directly on its local API
+This is important because the Xtend API is typically reachable only through a dedicated local network, not through the normal home network.
 
 This is the same principle used in the original HA_connection_Xtend setup.
 
-## Features
-
-- Local polling of Intergas Xtend and Xtreme values over HTTP
-- Heat pump temperature, flow, pressure, power and operating state sensors
-- Boiler / Xtreme status and operating diagnostics
-- Error, lockout and notification code mapping
-- Energy, thermal and efficiency related values
-- Active binary sensors for Xtend and Xtreme presence/activity
-- Configurable polling interval
-- Home Assistant UI config flow
-- Works without third-party cloud services
-
-## Supported data
-
-The integration reads and exposes values such as:
-
-- heat pump supply / return temperatures
-- outdoor temperature
-- flow rate
-- suction and exhaust pressure
-- current electrical power
-- thermal power and COP
-- operation mode and system status
-- notification and lockout codes
-- Xtreme boiler supply / return temperatures
-- burner status and boiler diagnostics
-
-## Entities
-
-The integration creates a set of sensors and binary sensors in Home Assistant.
-
-### Heat pump / Xtend sensors
-
-Examples include:
-
-- current electrical power
-- thermal power
-- COP
-- heat pump supply and return temperature
-- outdoor temperature
-- flow rate
-- operation mode
-- working mode
-- system status
-- error / lockout / notification codes
-- energy totals and runtime counters
-
-### Xtreme / boiler sensors
-
-Examples include:
-
-- boiler supply and return temperature
-- burner status
-- boiler gas meter data
-- DHW and CH related values
-- boiler operating hours and setpoints
-
-### Binary sensors
-
-- Xtend active check
-- Xtreme active check
-
-These are based on the delta between supply and return temperatures and indicate whether the unit is actively running.
+<img width="1024" height="419" alt="image" src="https://github.com/user-attachments/assets/1f496b9f-d41b-4765-939e-175d17f7be27" />
 
 ## Installation
 
