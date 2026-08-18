@@ -1,6 +1,6 @@
 # Intergas Local
 
-![Logo](logo.png)
+![Logo](icon.png)
 
 A Home Assistant custom integration for the Intergas Xtend / Xtreme local API.
 
