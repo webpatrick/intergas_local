@@ -1,5 +1,7 @@
 # Intergas Local
 
+![Logo](logo.png)
+
 A Home Assistant custom integration for the Intergas Xtend / Xtreme local API.
 
 This integration is based on the same local-access approach described in [HA_connection_Xtend](https://github.com/DSchoutsen/HA_connection_Xtend): the Home Assistant instance connects directly to the Xtend unit over its local HTTP API instead of using a cloud service.
