@@ -69,6 +69,10 @@ A common setup is:
 
 This allows Home Assistant to talk to the unit locally without exposing the system to the internet or needing the cloud.
 
+## Sensor reference
+
+For a complete overview of the available sensors and what they represent, see [SENSOR_REFERENCE.md](SENSOR_REFERENCE.md).
+
 ## Troubleshooting
 
 ### Integration does not load
