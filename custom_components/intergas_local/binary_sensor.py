@@ -49,8 +49,20 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddE
     ])
 
 
+def _flow_value(data: dict[str, object], key: str) -> float | None:
+    if not isinstance(data, dict):
+        return None
+    raw = data.get(key)
+    if raw is None:
+        return None
+    try:
+        return float(str(raw)) / 100
+    except (TypeError, ValueError):
+        return None
+
+
 class XtendActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], BinarySensorEntity):
-    """Xtend (Heatpump) active check: supply - return > 0.5°C"""
+    """Xtend (Heatpump) active check: flow must be present and supply - return > 0.5°C"""
     
     def __init__(self, coordinator: XtendDataUpdateCoordinator, entry_id: str, device_info: dict | None = None) -> None:
         super().__init__(coordinator)
@@ -64,6 +76,10 @@ class XtendActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], Bin
         if not isinstance(self.coordinator.data, dict):
             return False
 
+        flow = _flow_value(self.coordinator.data, "629c")
+        if flow is not None and flow <= 0:
+            return False
+
         try:
             # 62e7 = tHpSupply, 6280 = tHpReturn
             supply = float(str(self.coordinator.data.get("62e7", 0))) / 100
@@ -71,7 +87,10 @@ class XtendActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], Bin
         except (TypeError, ValueError):
             return False
 
-        return (supply - return_value) > 0.5
+        delta_t = supply - return_value
+        if flow is None:
+            return delta_t > 0.5
+        return delta_t > 0.5
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
@@ -79,7 +98,7 @@ class XtendActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], Bin
 
 
 class XtremeActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], BinarySensorEntity):
-    """Xtreme (Boiler) active check: supply - return > 0.5°C"""
+    """Xtreme (Boiler) active check: when flow is known it must be > 0 before a delta is considered active."""
     
     def __init__(self, coordinator: XtendDataUpdateCoordinator, entry_id: str, device_info: dict | None = None) -> None:
         super().__init__(coordinator)
@@ -93,6 +112,10 @@ class XtremeActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], Bi
         if not isinstance(self.coordinator.data, dict):
             return False
 
+        flow = _flow_value(self.coordinator.data, "8e7f")
+        if flow is not None and flow <= 0:
+            return False
+
         try:
             # 625b = tBoilerSupply, 623c = tBoilerReturn
             supply = float(str(self.coordinator.data.get("625b", 0))) / 100
@@ -100,7 +123,10 @@ class XtremeActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], Bi
         except (TypeError, ValueError):
             return False
 
-        return (supply - return_value) > 0.5
+        delta_t = supply - return_value
+        if flow is None:
+            return delta_t > 0.5
+        return delta_t > 0.5
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:

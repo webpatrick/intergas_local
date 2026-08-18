@@ -322,14 +322,13 @@ def _calculate_cop(data: dict[str, Any]) -> float:
 
 
 def _calculate_delta_t(data: dict[str, Any]) -> float:
-    # Compute Delta T using whole integers (truncate decimals like the original YAML int filter)
-    # Read the same pre-scaled values as the individual sensors (divide by 100)
+    # Delta T is a real measurement and should stay visible even when flow is unknown/zero.
+    # We still keep the same integer-style semantics used by the original dashboard logic.
     supply = _as_float(data, "62e7", default=None, divisor=100)
     return_value = _as_float(data, "6280", default=None, divisor=100)
     if supply is None or return_value is None:
         return 0.0
     try:
-        # Truncate to whole numbers before subtracting (same semantics as | int in templates)
         supply_i = int(float(supply))
         return_i = int(float(return_value))
     except (TypeError, ValueError):
@@ -351,7 +350,7 @@ def _calculate_thermal_total(data: dict[str, Any]) -> float:
 
 
 def _calculate_xtreme_delta_t(data: dict[str, Any]) -> float:
-    # Compute Xtreme Delta T using whole integers (truncate decimals)
+    # Delta T is a real measurement and should stay visible even when flow is unknown/zero.
     supply = _as_float(data, "625b", default=None, divisor=100)
     return_value = _as_float(data, "623c", default=None, divisor=100)
     if supply is None or return_value is None:
