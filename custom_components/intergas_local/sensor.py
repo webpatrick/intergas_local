@@ -147,6 +147,7 @@ def _friendly_sensor_name(name: str) -> str:
         "delta t": "Delta T",
         "delta": "Delta",
         "eev": "EEV",
+        "ch": "CH",
         "ot": "OT",
         "opentherm": "OpenTherm",
         "hp": "Heat pump",
@@ -199,7 +200,7 @@ def _friendly_sensor_name(name: str) -> str:
             lowered = lowered.replace(old, new)
 
     # Now split into words and title-case each, preserving known acronyms
-    exceptions_upper = {"COP", "EEV", "PV", "DHW", "AC", "DC", "OT", "OPENTHERM"}
+    exceptions_upper = {"COP", "EEV", "PV", "DHW", "AC", "DC", "CH", "OT", "OPENTHERM"}
     words = []
     for w in lowered.split():
         # If replacement produced an already-cased token (contains uppercase or spaces), keep it
@@ -209,6 +210,8 @@ def _friendly_sensor_name(name: str) -> str:
             token = w.title()
         if token.upper() in exceptions_upper:
             token = token.upper()
+        elif token.lower() == "ch":
+            token = "CH"
         elif token.lower() == "ot":
             token = "OT"
         elif token.lower() == "opentherm":
