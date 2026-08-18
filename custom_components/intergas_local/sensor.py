@@ -147,6 +147,8 @@ def _friendly_sensor_name(name: str) -> str:
         "delta t": "Delta T",
         "delta": "Delta",
         "eev": "EEV",
+        "ot": "OT",
+        "opentherm": "OpenTherm",
         "hp": "Heat pump",
         "thp": "Heat pump",
         "fhp": "Heat pump",
@@ -197,7 +199,7 @@ def _friendly_sensor_name(name: str) -> str:
             lowered = lowered.replace(old, new)
 
     # Now split into words and title-case each, preserving known acronyms
-    exceptions_upper = {"COP", "EEV", "PV", "DHW", "AC", "DC"}
+    exceptions_upper = {"COP", "EEV", "PV", "DHW", "AC", "DC", "OT", "OPENTHERM"}
     words = []
     for w in lowered.split():
         # If replacement produced an already-cased token (contains uppercase or spaces), keep it
@@ -207,6 +209,10 @@ def _friendly_sensor_name(name: str) -> str:
             token = w.title()
         if token.upper() in exceptions_upper:
             token = token.upper()
+        elif token.lower() == "ot":
+            token = "OT"
+        elif token.lower() == "opentherm":
+            token = "OpenTherm"
         words.append(token)
 
     out = " ".join(words).replace("  ", " ").strip()
@@ -390,7 +396,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddE
     # Xtend (heatpump) as a child device
     xtend_device_info = {
         "identifiers": {(DOMAIN, f"{entry.entry_id}_xtend")},
-        "name": "Intergas Xtend (Heatpump)",
+        "name": "Intergas Xtend",
         "manufacturer": "Intergas",
         "model": "Xtend",
         "via_device": (DOMAIN, entry.entry_id),
@@ -399,7 +405,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddE
     # Xtreme (boiler) as a child device
     xtreme_device_info = {
         "identifiers": {(DOMAIN, f"{entry.entry_id}_xtreme")},
-        "name": "Intergas Xtreme (Boiler)",
+        "name": "Intergas Xtreme",
         "manufacturer": "Intergas",
         "model": "Xtreme",
         "via_device": (DOMAIN, entry.entry_id),

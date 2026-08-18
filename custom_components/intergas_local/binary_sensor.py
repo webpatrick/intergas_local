@@ -28,7 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddE
     # Xtend (heatpump) device
     xtend_device_info = {
         "identifiers": {(DOMAIN, f"{entry.entry_id}_xtend")},
-        "name": "Intergas Xtend (Heatpump)",
+        "name": "Intergas Xtend",
         "manufacturer": "Intergas",
         "model": "Xtend",
         "via_device": (DOMAIN, entry.entry_id),
@@ -37,7 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddE
     # Xtreme (boiler) device
     xtreme_device_info = {
         "identifiers": {(DOMAIN, f"{entry.entry_id}_xtreme")},
-        "name": "Intergas Xtreme (Boiler)",
+        "name": "Intergas Xtreme",
         "manufacturer": "Intergas",
         "model": "Xtreme",
         "via_device": (DOMAIN, entry.entry_id),
