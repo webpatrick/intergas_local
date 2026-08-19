@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import logging
 from typing import Any, Callable
@@ -322,18 +322,14 @@ def _calculate_cop(data: dict[str, Any]) -> float:
 
 
 def _calculate_delta_t(data: dict[str, Any]) -> float:
-    # Delta T is a real measurement and should stay visible even when flow is unknown/zero.
-    # We still keep the same integer-style semantics used by the original dashboard logic.
     supply = _as_float(data, "62e7", default=None, divisor=100)
     return_value = _as_float(data, "6280", default=None, divisor=100)
     if supply is None or return_value is None:
         return 0.0
     try:
-        supply_i = int(float(supply))
-        return_i = int(float(return_value))
+        return round(float(supply) - float(return_value), 1)
     except (TypeError, ValueError):
         return 0.0
-    return round(float(supply_i - return_i), 1)
 
 
 def _calculate_thermal_total(data: dict[str, Any]) -> float:
@@ -350,17 +346,14 @@ def _calculate_thermal_total(data: dict[str, Any]) -> float:
 
 
 def _calculate_xtreme_delta_t(data: dict[str, Any]) -> float:
-    # Delta T is a real measurement and should stay visible even when flow is unknown/zero.
     supply = _as_float(data, "625b", default=None, divisor=100)
     return_value = _as_float(data, "623c", default=None, divisor=100)
     if supply is None or return_value is None:
         return 0.0
     try:
-        supply_i = int(float(supply))
-        return_i = int(float(return_value))
+        return round(float(supply) - float(return_value), 1)
     except (TypeError, ValueError):
         return 0.0
-    return round(float(supply_i - return_i), 1)
 
 
 def _calculate_xtreme_efficiency(data: dict[str, Any]) -> float:
