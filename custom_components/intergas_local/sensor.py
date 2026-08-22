@@ -301,7 +301,6 @@ SENSOR_DEFINITIONS: list[XtendSensorSpec] = [
     XtendSensorSpec("844c", "xtreme_boiler_ot_ch_pressure", lambda d: _as_float(d, "844c", divisor=100), unit="bar", state_class=SensorStateClass.MEASUREMENT, icon="mdi:timeline-clock", is_xtreme=True),
     XtendSensorSpec("8e18", "xtreme_boiler_ot_flame_loss", lambda d: _as_int(d, "8e18"), icon="mdi:counter", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC),
     XtendSensorSpec("xtreme_delta_t", "xtreme_deltaT", lambda d: _calculate_xtreme_delta_t(d), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-check", is_xtreme=True),
-    XtendSensorSpec("xtreme_efficiency", "xtreme_efficiency", lambda d: _calculate_xtreme_efficiency(d), unit="kWh/m³", state_class=SensorStateClass.MEASUREMENT, icon="mdi:gauge", is_xtreme=True),
 ]
 
 
@@ -354,22 +353,6 @@ def _calculate_xtreme_delta_t(data: dict[str, Any]) -> float:
         return round(float(supply) - float(return_value), 1)
     except (TypeError, ValueError):
         return 0.0
-
-
-def _calculate_xtreme_efficiency(data: dict[str, Any]) -> float:
-    # thermal (63f0) is provided via _as_int in the sensor definitions; use same helper
-    thermal = _as_int(data, "63f0", default=0.0)
-    gas = _as_float(data, "7191", default=0.0, divisor=10000)
-    if gas is None or thermal is None:
-        return 0.0
-    try:
-        thermal_f = float(thermal)
-        gas_f = float(gas)
-    except (TypeError, ValueError):
-        return 0.0
-    if gas_f <= 0:
-        return 0.0
-    return round(float(thermal_f / gas_f), 3)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddEntitiesCallback) -> None:

@@ -76,7 +76,6 @@ The exact sensor names in Home Assistant can vary slightly depending on the enti
 | Boiler OT CH Pressure | Central heating pressure |
 | Boiler OT Flame Loss | Flame-loss counter / diagnostic |
 | Xtreme Delta T | Boiler supply-return temperature difference |
-| Xtreme Efficiency | Approximate Xtreme efficiency based on thermal energy vs gas usage |
 
 ## Binary sensors
 
