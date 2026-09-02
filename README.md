@@ -14,7 +14,7 @@ The Intergas Xtend system exposes operational data through a local API on the un
 
 ## Important: dedicated Wi‑Fi requirement
 
-For Xtend installations, Home Assistant needs to be connected to the local accespoint of the Xtend using a dedicated Wi‑Fi adapter.
+For Xtend installations, Home Assistant needs to be connected to the local access point of the Xtend using a dedicated Wi‑Fi adapter.
 
 This is important because the Xtend API is typically reachable only through a dedicated local network, not through the normal home network.
 
@@ -99,4 +99,4 @@ This project is a local, derived implementation based on the original Xtend / In
 
 ## License
 
-This project does not currently declare a license in its metadata. Please check the repository contents and downstream usage requirements before distributing or reusing the code outside your own Home Assistant setup.
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
