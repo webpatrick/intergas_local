@@ -3,6 +3,7 @@
   "name": "Intergas Local",
   "version": "1.0.0",
   "documentation": "https://github.com/webpatrick/intergas_local",
+  "issue_tracker": "https://github.com/webpatrick/intergas_local/issues",
   "requirements": [],
   "dependencies": [],
   "codeowners": ["@webpatrick"],
