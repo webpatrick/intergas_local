@@ -266,3 +266,33 @@ def build_resource_url(host: str) -> str:
     value = value.rstrip("/")
     codes = ",".join(dict.fromkeys(API_CODES))
     return f"{value}/api/stats/values?fields={codes}"
+
+
+def build_device_infos(entry_id: str, host: str | None) -> tuple[dict, dict, dict]:
+    """Build the (api, xtend, xtreme) device_info dicts shared by all platforms."""
+    device_info = {
+        "identifiers": {(DOMAIN, entry_id)},
+        "name": "Intergas API",
+        "manufacturer": "Intergas",
+        "model": "Local",
+    }
+    if host:
+        device_info["connections"] = {("ip", host)}
+
+    xtend_device_info = {
+        "identifiers": {(DOMAIN, f"{entry_id}_xtend")},
+        "name": "Intergas Xtend",
+        "manufacturer": "Intergas",
+        "model": "Xtend",
+        "via_device": (DOMAIN, entry_id),
+    }
+
+    xtreme_device_info = {
+        "identifiers": {(DOMAIN, f"{entry_id}_xtreme")},
+        "name": "Intergas Xtreme",
+        "manufacturer": "Intergas",
+        "model": "Xtreme",
+        "via_device": (DOMAIN, entry_id),
+    }
+
+    return device_info, xtend_device_info, xtreme_device_info

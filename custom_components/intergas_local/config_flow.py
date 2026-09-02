@@ -54,14 +54,12 @@ class XtendOptionsFlowHandler(config_entries.OptionsFlow):
             "scan_interval",
             self.config_entry.data.get("scan_interval", DEFAULT_SCAN_INTERVAL),
         )
-        current_rename = self.config_entry.options.get("rename_entities", True)
 
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
                     vol.Optional("scan_interval", default=current_scan): int,
-                    vol.Optional("rename_entities", default=current_rename): bool,
                 }
             ),
         )
