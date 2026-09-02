@@ -1,12 +1,12 @@
 {
   "domain": "intergas_local",
   "name": "Intergas Local",
-  "version": "1.0.0",
-  "documentation": "https://github.com/webpatrick/intergas_local",
-  "issue_tracker": "https://github.com/webpatrick/intergas_local/issues",
-  "requirements": [],
-  "dependencies": [],
   "codeowners": ["@webpatrick"],
   "config_flow": true,
-  "iot_class": "local_polling"
+  "dependencies": [],
+  "documentation": "https://github.com/webpatrick/intergas_local",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/webpatrick/intergas_local/issues",
+  "requirements": [],
+  "version": "1.0.0"
 }
