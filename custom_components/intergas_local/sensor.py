@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from typing import Any, Callable
 
 from homeassistant.components.sensor import (
@@ -30,33 +31,35 @@ from .coordinator import XtendDataUpdateCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
+@dataclass(slots=True)
 class XtendSensorSpec:
     """Static description of a single Xtend/Xtreme sensor entity."""
 
-    def __init__(
-        self,
-        key: str,
-        name: str,
-        value_fn: Callable[[dict[str, Any]], Any],
-        *,
-        translation_key: str,
-        unit: str | None = None,
-        device_class: str | None = None,
-        state_class: str | None = None,
-        icon: str | None = None,
-        entity_category: str | None = None,
-        is_xtreme: bool = False,
-    ) -> None:
-        self.key = key
-        self.name = name
-        self.value_fn = value_fn
-        self.translation_key = translation_key
-        self.unit = unit
-        self.device_class = device_class
-        self.state_class = state_class
-        self.icon = icon
-        self.entity_category = entity_category
-        self.is_xtreme = is_xtreme
+    key: str
+    name: str
+    value_fn: Callable[[dict[str, Any]], Any]
+    translation_key: str
+    unit: str | None = None
+    device_class: str | None = None
+    state_class: str | None = None
+    icon: str | None = None
+    entity_category: str | None = None
+    is_xtreme: bool = False
+    translation_placeholders: dict[str, Any] | None = None
+    has_entity_name: bool = True
+    entity_registry_enabled_default: bool = True
+    entity_registry_visible_default: bool = True
+    native_unit_of_measurement: str | None = None
+    suggested_unit_of_measurement: str | None = None
+    suggested_display_precision: int | None = None
+    last_reset: Any = None
+    options: Any = None
+    force_update: bool = False
+
+    def __post_init__(self) -> None:
+        self.native_unit_of_measurement = self.unit
+        self.suggested_unit_of_measurement = self.unit
+        self.suggested_display_precision = 1 if self.unit is not None else None
 
 
 def _stats_dict(data: dict[str, Any]) -> dict[str, Any]:
@@ -236,25 +239,6 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddE
 
     _LOGGER.info("Adding %s Xtend sensor entities for %s", len(entities), entry.entry_id)
     async_add_entities(entities)
-
-    # Older versions of this integration forced a custom name onto every sensor's
-    # registry entry. A custom name takes priority over the translation-based name
-    # now used by XtendSensorEntity, so clear that legacy override once to let the
-    # translated name show through. This is a no-op for entities without one.
-    try:
-        from homeassistant.helpers import entity_registry as er
-
-        registry = er.async_get(hass)
-        for spec in SENSOR_DEFINITIONS:
-            unique_id = f"{entry.entry_id}_{spec.name}"
-            entity_id = registry.async_get_entity_id("sensor", DOMAIN, unique_id)
-            if entity_id:
-                registry_entry = registry.async_get(entity_id)
-                if registry_entry is not None and registry_entry.name is not None:
-                    registry.async_update_entity(entity_id, name=None)
-                    _LOGGER.debug("Cleared legacy custom name for %s", entity_id)
-    except Exception:  # pragma: no cover - defensive
-        _LOGGER.debug("Could not clear legacy entity names (entity_registry not available)")
 
 
 class XtendRawSensor(CoordinatorEntity[XtendDataUpdateCoordinator], SensorEntity):

@@ -68,7 +68,8 @@ class DeltaTActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], Bi
         device_info: dict | None = None,
     ) -> None:
         super().__init__(coordinator)
-        self._attr_name = "Is Active"
+        self._attr_has_entity_name = True
+        self._attr_translation_key = "is_active"
         self._attr_unique_id = f"{entry_id}_{unique_id_suffix}"
         self._attr_icon = "mdi:fire-off"
         self._attr_device_info = device_info
@@ -98,5 +99,4 @@ class DeltaTActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], Bi
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         return {"source": self._source}
-
 

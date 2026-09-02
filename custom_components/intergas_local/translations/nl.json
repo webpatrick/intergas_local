@@ -92,6 +92,9 @@
       "boiler_ch_pressure": { "name": "CV-druk" },
       "boiler_flame_loss_count": { "name": "Aantal vlamuitvallen" },
       "xtreme_delta_t": { "name": "Delta T" }
+    },
+    "binary_sensor": {
+      "is_active": { "name": "Is actief" }
     }
   }
 }

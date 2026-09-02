@@ -92,6 +92,9 @@
       "boiler_ch_pressure": { "name": "CH pressure" },
       "boiler_flame_loss_count": { "name": "Flame loss count" },
       "xtreme_delta_t": { "name": "Delta T" }
+    },
+    "binary_sensor": {
+      "is_active": { "name": "Is active" }
     }
   }
 }
