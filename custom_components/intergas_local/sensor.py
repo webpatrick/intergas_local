@@ -1,7 +1,6 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import logging
-import re
 from typing import Any, Callable
 
 from homeassistant.components.sensor import (
@@ -40,6 +39,7 @@ class XtendSensorSpec:
         name: str,
         value_fn: Callable[[dict[str, Any]], Any],
         *,
+        translation_key: str,
         unit: str | None = None,
         device_class: str | None = None,
         state_class: str | None = None,
@@ -50,6 +50,7 @@ class XtendSensorSpec:
         self.key = key
         self.name = name
         self.value_fn = value_fn
+        self.translation_key = translation_key
         self.unit = unit
         self.device_class = device_class
         self.state_class = state_class
@@ -109,189 +110,71 @@ def _mode_name(data: dict[str, Any], key: str, lookup: dict[int, str]) -> str | 
     return lookup.get(int(raw), f"Unknown ({raw})")
 
 
-def _friendly_sensor_name(name: str) -> str:
-    # Produce a natural-language display name from the internal spec name.
-    text = name
-    # Remove known prefixes
-    if text.startswith("xtreme_"):
-        text = text[len("xtreme_"):]
-    elif text.startswith("xtend_"):
-        text = text[len("xtend_"):]
-
-    # Split camelCase and boundaries between letters and digits
-    # Add space between lower-to-upper case boundaries: fooBar -> foo Bar
-    text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)
-    # Add space between letter-to-digit and digit-to-letter boundaries: a1b -> a 1 b
-    text = re.sub(r"([A-Za-z])([0-9])", r"\1 \2", text)
-    text = re.sub(r"([0-9])([A-Za-z])", r"\1 \2", text)
-
-    # Normalize separators to spaces
-    text = text.replace("-", "_")
-    text = text.replace("__", "_")
-    text = text.replace("_", " ")
-
-    # Trim and collapse whitespace
-    text = " ".join(text.split())
-
-    # Common replacements (use lowercase keys for matching)
-    replacements = {
-        "cop": "COP",
-        "delta t": "Delta T",
-        "delta": "Delta",
-        "eev": "EEV",
-        "opentherm": "OpenTherm",
-        "hp": "Heat pump",
-        "thp": "Heat pump",
-        "fhp": "Heat pump",
-        "t hp": "Heat pump",
-        "thpsupply": "Heat pump supply",
-        "thpreturn": "Heat pump return",
-        "fsystem": "System flow",
-        "t outdoor": "Outdoor temperature",
-        "t supply": "Supply temperature",
-        "t return": "Return temperature",
-        "roomtemperature": "Room temperature",
-        "power thermal": "Thermal power",
-        "powerelectric": "Electric power",
-        "power electric": "Electric power",
-        "actualfan1speed": "Actual fan 1 speed",
-        "actualfrequency": "Frequency",
-        "suctionpressure": "Suction pressure",
-        "exhaustpressure": "Exhaust pressure",
-        "coiltemperature": "Coil temperature",
-        "exhausttemperature": "Exhaust temperature",
-        "operationheatinghours": "Heating operation hours",
-        "startheatingcounter": "Heating starts",
-        "startdefrostcounter": "Defrost starts",
-        "requestedtemperature": "Requested temperature",
-        "lockout": "Lockout",
-        "errorcode": "Error code",
-        "software version": "Software version",
-        "workingmode": "Working mode",
-        "heatpumpmode": "Heat pump mode",
-        "systemstatus": "System status",
-        "notification code": "Notification code",
-        "notification_code": "Notification code",
-        "heatdemand status": "Heat demand status",
-        "heatdemand_status": "Heat demand status",
-        "burner status": "Burner status",
-        "active check": "Active check",
-        "cop total": "Total COP",
-        "thermal total": "Total thermal energy",
-        "tboilersupply": "Boiler supply temperature",
-        "tboilerreturn": "Boiler return temperature",
-        "gas meter": "Gas meter",
-    }
-
-    lowered = text.lower()
-    # Apply replacements where substrings match
-    for old, new in replacements.items():
-        if old in lowered:
-            lowered = lowered.replace(old, new)
-
-    # Now split into words and title-case each, preserving known acronyms
-    exceptions_upper = {"COP", "EEV", "PV", "DHW", "AC", "DC", "CH", "OT", "OPENTHERM"}
-    words = []
-    for w in lowered.split():
-        # If replacement produced an already-cased token (contains uppercase or spaces), keep it
-        if any(ch.isupper() for ch in w) or " " in w:
-            token = w
-        else:
-            token = w.title()
-        if token.upper() in exceptions_upper:
-            token = token.upper()
-        elif token.lower() == "ch":
-            token = "CH"
-        elif token.lower() == "ot":
-            token = "OT"
-        elif token.lower() == "opentherm":
-            token = "OpenTherm"
-        words.append(token)
-
-    out = " ".join(words).replace("  ", " ").strip()
-
-    # Cosmetic fixes
-    out = out.replace("Thermal Power", "Thermal power")
-    out = out.replace("Electric Power", "Electric power")
-    out = out.replace("Total Cop", "Total COP")
-    # Fix common concatenations
-    out = out.replace("Currentboilerpowerthermal", "Current boiler power (thermal)")
-    out = out.replace("Currentpowerelectric", "Current power (electric)")
-    out = out.replace("Currentpowerthermal", "Current power (thermal)")
-
-    # Remove numeric zone/index indicators (space + digit anywhere in the name)
-    out = re.sub(r"\s+\d+", "", out)
-    # Clean up any resulting double spaces
-    out = " ".join(out.split())
-
-    return out
-
-
 SENSOR_DEFINITIONS: list[XtendSensorSpec] = [
-    XtendSensorSpec("4133", "xtend_errorCode", lambda d: _mode_name(d, "4133", ERROR_CODES), icon="mdi:alert-circle-outline", entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("47e0", "xtend_software_version", lambda d: _as_raw_value(d, "47e0"), entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("503e", "xtend_currentHpPowerThermal", lambda d: _as_float(d, "503e", divisor=1000), unit="kW", device_class=None, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-lines"),
-    XtendSensorSpec("5041", "xtend_currentCop", lambda d: _as_float(d, "5041", divisor=10), unit="thermal/kWh", state_class=SensorStateClass.MEASUREMENT, icon="mdi:gauge"),
-    XtendSensorSpec("5077", "xtend_currentPowerThermal", lambda d: _as_float(d, "5077", divisor=1000), unit="kW", state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-lines"),
-    XtendSensorSpec("5088", "xtend_currentBoilerPowerThermal", lambda d: _as_float(d, "5088", divisor=1000), unit="kW", state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-lines"),
-    XtendSensorSpec("50f2", "xtend_currentPowerElectric", lambda d: _as_int(d, "50f2"), unit="W", state_class=SensorStateClass.MEASUREMENT, icon="mdi:power-plug-outline"),
-    XtendSensorSpec("777d", "xtend_heatpumpMode", lambda d: _mode_name(d, "777d", HEAT_PUMP_MODES), icon="mdi:fire"),
-    XtendSensorSpec("79b3", "xtend_roomtemperature_1", lambda d: _as_float(d, "79b3", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:home-thermometer-outline"),
-    XtendSensorSpec("6280", "xtend_tHpReturn", lambda d: _as_float(d, "6280", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:water-thermometer-outline"),
-    XtendSensorSpec("629c", "xtend_fSystem", lambda d: _as_float(d, "629c", divisor=100), unit="l/min", state_class=SensorStateClass.MEASUREMENT, icon="mdi:waves-arrow-right"),
-    XtendSensorSpec("62d1", "xtend_tOutdoor", lambda d: _as_float(d, "62d1", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:sun-thermometer-outline"),
-    XtendSensorSpec("62e7", "xtend_tHpSupply", lambda d: _as_float(d, "62e7", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:water-thermometer"),
-    XtendSensorSpec("63b3", "xtend_electricEnergyHeating", lambda d: _as_int(d, "63b3"), unit="kWh", device_class=SensorDeviceClass.ENERGY, state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:power-plug-outline"),
-    XtendSensorSpec("63df", "xtend_thermalEnergyBoiler", lambda d: _as_int(d, "63df"), unit="kWh", state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:thermometer-lines"),
-    XtendSensorSpec("63f0", "xtend_thermalEnergyHeating", lambda d: _as_int(d, "63f0"), unit="kWh", state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:thermometer-lines"),
-    XtendSensorSpec("6505", "xtend_suctionTemperature", lambda d: _as_float(d, "6505", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature"),
-    XtendSensorSpec("6578", "xtend_workingMode", lambda d: _mode_name(d, "6578", WORKING_MODES), icon="mdi:fire"),
-    XtendSensorSpec("6579", "xtend_suctionPressure", lambda d: _as_float(d, "6579", divisor=100), unit="bar", state_class=SensorStateClass.MEASUREMENT, icon="mdi:timeline-clock-outline"),
-    XtendSensorSpec("65a7", "xtend_actualFrequency", lambda d: _as_float(d, "65a7", divisor=100), unit="hertz", state_class=SensorStateClass.MEASUREMENT, icon="mdi:sine-wave"),
-    XtendSensorSpec("65b0", "xtend_exhaustPressure", lambda d: _as_float(d, "65b0", divisor=100), unit="bar", state_class=SensorStateClass.MEASUREMENT, icon="mdi:timeline-clock-outline"),
-    XtendSensorSpec("65c1", "xtend_coilTemperature", lambda d: _as_float(d, "65c1", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature"),
-    XtendSensorSpec("65d9", "xtend_exhaustTemperature", lambda d: _as_float(d, "65d9", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature"),
-    XtendSensorSpec("6a53", "xtend_startDefrostCounter", lambda d: _as_raw_value(d, "6a53"), icon="mdi:counter", entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("6a8e", "xtend_startHeatingCounter", lambda d: _as_int(d, "6a8e"), icon="mdi:counter", entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("6ac5", "xtend_operationHeatingHours", lambda d: _as_int(d, "6ac5"), unit="h", device_class=SensorDeviceClass.DURATION, state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:clock-outline", entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("6c26", "xtend_temperatureCondensor_refrigrerant_gas", lambda d: _as_float(d, "6c26", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature"),
-    XtendSensorSpec("6c33", "xtend_exhaustOverheat", lambda d: _as_float(d, "6c33", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature"),
-    XtendSensorSpec("6c53", "xtend_temperatureSubcooling", lambda d: _as_float(d, "6c53", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature"),
-    XtendSensorSpec("6c66", "xtend_EEVSteps", lambda d: _as_int(d, "6c66"), unit="steps", icon="mdi:numeric"),
-    XtendSensorSpec("6c8a", "xtend_actualFan1Speed", lambda d: _as_int(d, "6c8a"), unit="rpm", icon="mdi:fan"),
-    XtendSensorSpec("6ceb", "xtend_temperatureCondensor_refrigrerant_liquid", lambda d: _as_float(d, "6ceb", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature"),
-    XtendSensorSpec("6cfb", "xtend_suctionOverheat", lambda d: _as_float(d, "6cfb", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature"),
-    XtendSensorSpec("7160", "xtend_poweron_number", lambda d: _as_int(d, "7160"), icon="mdi:counter", entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("71a7", "xtend_poweron_hours", lambda d: _as_int(d, "71a7"), unit="h", device_class=SensorDeviceClass.DURATION, state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:clock-outline", entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("7767", "xtend_RequestedTemperature", lambda d: _as_float(d, "7767", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:thermometer-auto"),
-    XtendSensorSpec("7921", "xtend_roomtemperature_set_1", lambda d: _as_float(d, "7921", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:home-thermometer"),
-    XtendSensorSpec("7940", "xtend_notification_code", lambda d: _mode_name(d, "7940", NOTIFICATION_CODES), icon="mdi:bell-outline", entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("7e2c", "xtend_lockout_code", lambda d: _mode_name(d, "7e2c", LOCKOUT_CODES), icon="mdi:alert-outline", entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("7e51", "xtend_heatdemand_status", lambda d: _mode_name(d, "7e51", HEAT_DEMAND_STATUS), icon="mdi:message-badge-outline"),
-    XtendSensorSpec("7ed3", "xtend_water_pressure", lambda d: _as_float(d, "7ed3", divisor=100), unit="bar", state_class=SensorStateClass.MEASUREMENT, icon="mdi:timeline-clock-outline"),
-    XtendSensorSpec("77dd", "xtend_systemStatus", lambda d: _mode_name(d, "77dd", SYSTEM_STATUS), icon="mdi:power", entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("cop_total", "xtend_cop_total", lambda d: _calculate_cop(d), unit="thermal/kWh", state_class=SensorStateClass.MEASUREMENT, icon="mdi:gauge"),
-    XtendSensorSpec("delta_t", "xtend_deltaT", lambda d: _calculate_delta_t(d, "62e7", "6280"), unit="°C", state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-check"),
-    XtendSensorSpec("thermal_total", "xtend_thermal_total", lambda d: _calculate_thermal_total(d), unit="kWh", state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-lines"),
-    XtendSensorSpec("625b", "xtreme_tBoilerSupply", lambda d: _as_float(d, "625b", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:water-thermometer", is_xtreme=True),
-    XtendSensorSpec("623c", "xtreme_tBoilerReturn", lambda d: _as_float(d, "623c", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:water-thermometer-outline", is_xtreme=True),
-    XtendSensorSpec("7e7a", "xtreme_burner_status", lambda d: _mode_name(d, "7e7a", XTREME_BURNER_STATUS), icon="mdi:fire", is_xtreme=True),
-    XtendSensorSpec("7191", "xtreme_gas_meter_ch", lambda d: _as_float(d, "7191", divisor=10000), unit="m³", device_class=SensorDeviceClass.VOLUME, state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:gauge", is_xtreme=True),
-    XtendSensorSpec("8e1e", "xtreme_boiler_ot_slave_version", lambda d: _as_raw_value(d, "8e1e"), icon="mdi:check-decagram", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("8ecc", "xtreme_boiler_ot_slave_opentherm_version", lambda d: _as_raw_value(d, "8ecc"), icon="mdi:check-decagram", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("8edb", "xtreme_boiler_ot_dhw_temperature", lambda d: _as_float(d, "8edb", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:water-thermometer", is_xtreme=True),
-    XtendSensorSpec("8ecb", "xtreme_boiler_ot_dhw_setpoint", lambda d: _as_float(d, "8ecb", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:stop-circle-outline", is_xtreme=True),
-    XtendSensorSpec("8e37", "xtreme_boiler_ot_dhw_hours", lambda d: _as_int(d, "8e37"), unit="h", device_class=SensorDeviceClass.DURATION, state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:counter", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("8e7f", "xtreme_boiler_ot_dhw_flowrate", lambda d: _as_float(d, "8e7f", divisor=100), unit="L/min", device_class=SensorDeviceClass.VOLUME_FLOW_RATE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:waves-arrow-right", is_xtreme=True),
-    XtendSensorSpec("8e8f", "xtreme_boiler_ot_ch_water_setpoint", lambda d: _as_float(d, "8e8f", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-auto", is_xtreme=True),
-    XtendSensorSpec("8ef9", "xtreme_boiler_ot_ch_hours", lambda d: _as_int(d, "8ef9"), unit="h", device_class=SensorDeviceClass.DURATION, state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:clock-outline", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("8e00", "xtreme_boiler_ot_burner_starts", lambda d: _as_raw_value(d, "8e00"), icon="mdi:counter", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("848e", "xtreme_boiler_ot_modulation_level_set", lambda d: _as_float(d, "848e", divisor=100), unit="%", state_class=SensorStateClass.MEASUREMENT, icon="mdi:percent-box-outline", is_xtreme=True),
-    XtendSensorSpec("8434", "xtreme_boiler_ot_control_setpoint", lambda d: _as_float(d, "8434", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer", is_xtreme=True),
-    XtendSensorSpec("84d1", "xtreme_boiler_ot_modulation_level", lambda d: _as_float(d, "84d1", divisor=100), unit="%", state_class=SensorStateClass.MEASUREMENT, icon="mdi:percent", is_xtreme=True),
-    XtendSensorSpec("844c", "xtreme_boiler_ot_ch_pressure", lambda d: _as_float(d, "844c", divisor=100), unit="bar", state_class=SensorStateClass.MEASUREMENT, icon="mdi:timeline-clock", is_xtreme=True),
-    XtendSensorSpec("8e18", "xtreme_boiler_ot_flame_loss", lambda d: _as_int(d, "8e18"), icon="mdi:counter", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("xtreme_delta_t", "xtreme_deltaT", lambda d: _calculate_delta_t(d, "625b", "623c"), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-check", is_xtreme=True),
+    XtendSensorSpec("4133", "xtend_errorCode", lambda d: _mode_name(d, "4133", ERROR_CODES), icon="mdi:alert-circle-outline", entity_category=EntityCategory.DIAGNOSTIC, translation_key="error_code"),
+    XtendSensorSpec("47e0", "xtend_software_version", lambda d: _as_raw_value(d, "47e0"), entity_category=EntityCategory.DIAGNOSTIC, translation_key="software_version"),
+    XtendSensorSpec("503e", "xtend_currentHpPowerThermal", lambda d: _as_float(d, "503e", divisor=1000), unit="kW", device_class=None, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-lines", translation_key="current_heat_pump_power_thermal"),
+    XtendSensorSpec("5041", "xtend_currentCop", lambda d: _as_float(d, "5041", divisor=10), unit="thermal/kWh", state_class=SensorStateClass.MEASUREMENT, icon="mdi:gauge", translation_key="current_cop"),
+    XtendSensorSpec("5077", "xtend_currentPowerThermal", lambda d: _as_float(d, "5077", divisor=1000), unit="kW", state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-lines", translation_key="current_power_thermal"),
+    XtendSensorSpec("5088", "xtend_currentBoilerPowerThermal", lambda d: _as_float(d, "5088", divisor=1000), unit="kW", state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-lines", translation_key="current_boiler_power_thermal"),
+    XtendSensorSpec("50f2", "xtend_currentPowerElectric", lambda d: _as_int(d, "50f2"), unit="W", state_class=SensorStateClass.MEASUREMENT, icon="mdi:power-plug-outline", translation_key="current_power_electric"),
+    XtendSensorSpec("777d", "xtend_heatpumpMode", lambda d: _mode_name(d, "777d", HEAT_PUMP_MODES), icon="mdi:fire", translation_key="heat_pump_mode"),
+    XtendSensorSpec("79b3", "xtend_roomtemperature_1", lambda d: _as_float(d, "79b3", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:home-thermometer-outline", translation_key="room_temperature"),
+    XtendSensorSpec("6280", "xtend_tHpReturn", lambda d: _as_float(d, "6280", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:water-thermometer-outline", translation_key="heat_pump_return_temperature"),
+    XtendSensorSpec("629c", "xtend_fSystem", lambda d: _as_float(d, "629c", divisor=100), unit="l/min", state_class=SensorStateClass.MEASUREMENT, icon="mdi:waves-arrow-right", translation_key="system_flow"),
+    XtendSensorSpec("62d1", "xtend_tOutdoor", lambda d: _as_float(d, "62d1", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:sun-thermometer-outline", translation_key="outdoor_temperature"),
+    XtendSensorSpec("62e7", "xtend_tHpSupply", lambda d: _as_float(d, "62e7", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:water-thermometer", translation_key="heat_pump_supply_temperature"),
+    XtendSensorSpec("63b3", "xtend_electricEnergyHeating", lambda d: _as_int(d, "63b3"), unit="kWh", device_class=SensorDeviceClass.ENERGY, state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:power-plug-outline", translation_key="electric_energy_heating"),
+    XtendSensorSpec("63df", "xtend_thermalEnergyBoiler", lambda d: _as_int(d, "63df"), unit="kWh", state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:thermometer-lines", translation_key="thermal_energy_boiler"),
+    XtendSensorSpec("63f0", "xtend_thermalEnergyHeating", lambda d: _as_int(d, "63f0"), unit="kWh", state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:thermometer-lines", translation_key="thermal_energy_heating"),
+    XtendSensorSpec("6505", "xtend_suctionTemperature", lambda d: _as_float(d, "6505", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature", translation_key="suction_temperature"),
+    XtendSensorSpec("6578", "xtend_workingMode", lambda d: _mode_name(d, "6578", WORKING_MODES), icon="mdi:fire", translation_key="working_mode"),
+    XtendSensorSpec("6579", "xtend_suctionPressure", lambda d: _as_float(d, "6579", divisor=100), unit="bar", state_class=SensorStateClass.MEASUREMENT, icon="mdi:timeline-clock-outline", translation_key="suction_pressure"),
+    XtendSensorSpec("65a7", "xtend_actualFrequency", lambda d: _as_float(d, "65a7", divisor=100), unit="hertz", state_class=SensorStateClass.MEASUREMENT, icon="mdi:sine-wave", translation_key="compressor_frequency"),
+    XtendSensorSpec("65b0", "xtend_exhaustPressure", lambda d: _as_float(d, "65b0", divisor=100), unit="bar", state_class=SensorStateClass.MEASUREMENT, icon="mdi:timeline-clock-outline", translation_key="exhaust_pressure"),
+    XtendSensorSpec("65c1", "xtend_coilTemperature", lambda d: _as_float(d, "65c1", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature", translation_key="coil_temperature"),
+    XtendSensorSpec("65d9", "xtend_exhaustTemperature", lambda d: _as_float(d, "65d9", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature", translation_key="exhaust_temperature"),
+    XtendSensorSpec("6a53", "xtend_startDefrostCounter", lambda d: _as_raw_value(d, "6a53"), icon="mdi:counter", entity_category=EntityCategory.DIAGNOSTIC, translation_key="defrost_start_count"),
+    XtendSensorSpec("6a8e", "xtend_startHeatingCounter", lambda d: _as_int(d, "6a8e"), icon="mdi:counter", entity_category=EntityCategory.DIAGNOSTIC, translation_key="heating_start_count"),
+    XtendSensorSpec("6ac5", "xtend_operationHeatingHours", lambda d: _as_int(d, "6ac5"), unit="h", device_class=SensorDeviceClass.DURATION, state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:clock-outline", entity_category=EntityCategory.DIAGNOSTIC, translation_key="heating_operation_hours"),
+    XtendSensorSpec("6c26", "xtend_temperatureCondensor_refrigrerant_gas", lambda d: _as_float(d, "6c26", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature", translation_key="condenser_refrigerant_gas_temperature"),
+    XtendSensorSpec("6c33", "xtend_exhaustOverheat", lambda d: _as_float(d, "6c33", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature", translation_key="exhaust_overheat"),
+    XtendSensorSpec("6c53", "xtend_temperatureSubcooling", lambda d: _as_float(d, "6c53", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature", translation_key="subcooling_temperature"),
+    XtendSensorSpec("6c66", "xtend_EEVSteps", lambda d: _as_int(d, "6c66"), unit="steps", icon="mdi:numeric", translation_key="eev_steps"),
+    XtendSensorSpec("6c8a", "xtend_actualFan1Speed", lambda d: _as_int(d, "6c8a"), unit="rpm", icon="mdi:fan", translation_key="fan_speed"),
+    XtendSensorSpec("6ceb", "xtend_temperatureCondensor_refrigrerant_liquid", lambda d: _as_float(d, "6ceb", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature", translation_key="condenser_refrigerant_liquid_temperature"),
+    XtendSensorSpec("6cfb", "xtend_suctionOverheat", lambda d: _as_float(d, "6cfb", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:coolant-temperature", translation_key="suction_overheat"),
+    XtendSensorSpec("7160", "xtend_poweron_number", lambda d: _as_int(d, "7160"), icon="mdi:counter", entity_category=EntityCategory.DIAGNOSTIC, translation_key="power_on_count"),
+    XtendSensorSpec("71a7", "xtend_poweron_hours", lambda d: _as_int(d, "71a7"), unit="h", device_class=SensorDeviceClass.DURATION, state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:clock-outline", entity_category=EntityCategory.DIAGNOSTIC, translation_key="power_on_hours"),
+    XtendSensorSpec("7767", "xtend_RequestedTemperature", lambda d: _as_float(d, "7767", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:thermometer-auto", translation_key="requested_temperature"),
+    XtendSensorSpec("7921", "xtend_roomtemperature_set_1", lambda d: _as_float(d, "7921", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, icon="mdi:home-thermometer", translation_key="room_temperature_setpoint"),
+    XtendSensorSpec("7940", "xtend_notification_code", lambda d: _mode_name(d, "7940", NOTIFICATION_CODES), icon="mdi:bell-outline", entity_category=EntityCategory.DIAGNOSTIC, translation_key="notification_code"),
+    XtendSensorSpec("7e2c", "xtend_lockout_code", lambda d: _mode_name(d, "7e2c", LOCKOUT_CODES), icon="mdi:alert-outline", entity_category=EntityCategory.DIAGNOSTIC, translation_key="lockout_code"),
+    XtendSensorSpec("7e51", "xtend_heatdemand_status", lambda d: _mode_name(d, "7e51", HEAT_DEMAND_STATUS), icon="mdi:message-badge-outline", translation_key="heat_demand_status"),
+    XtendSensorSpec("7ed3", "xtend_water_pressure", lambda d: _as_float(d, "7ed3", divisor=100), unit="bar", state_class=SensorStateClass.MEASUREMENT, icon="mdi:timeline-clock-outline", translation_key="water_pressure"),
+    XtendSensorSpec("77dd", "xtend_systemStatus", lambda d: _mode_name(d, "77dd", SYSTEM_STATUS), icon="mdi:power", entity_category=EntityCategory.DIAGNOSTIC, translation_key="system_status"),
+    XtendSensorSpec("cop_total", "xtend_cop_total", lambda d: _calculate_cop(d), unit="thermal/kWh", state_class=SensorStateClass.MEASUREMENT, icon="mdi:gauge", translation_key="total_cop"),
+    XtendSensorSpec("delta_t", "xtend_deltaT", lambda d: _calculate_delta_t(d, "62e7", "6280"), unit="°C", state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-check", translation_key="delta_t"),
+    XtendSensorSpec("thermal_total", "xtend_thermal_total", lambda d: _calculate_thermal_total(d), unit="kWh", state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-lines", translation_key="total_thermal_energy"),
+    XtendSensorSpec("625b", "xtreme_tBoilerSupply", lambda d: _as_float(d, "625b", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:water-thermometer", is_xtreme=True, translation_key="boiler_supply_temperature"),
+    XtendSensorSpec("623c", "xtreme_tBoilerReturn", lambda d: _as_float(d, "623c", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:water-thermometer-outline", is_xtreme=True, translation_key="boiler_return_temperature"),
+    XtendSensorSpec("7e7a", "xtreme_burner_status", lambda d: _mode_name(d, "7e7a", XTREME_BURNER_STATUS), icon="mdi:fire", is_xtreme=True, translation_key="burner_status"),
+    XtendSensorSpec("7191", "xtreme_gas_meter_ch", lambda d: _as_float(d, "7191", divisor=10000), unit="m³", device_class=SensorDeviceClass.VOLUME, state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:gauge", is_xtreme=True, translation_key="gas_meter_ch"),
+    XtendSensorSpec("8e1e", "xtreme_boiler_ot_slave_version", lambda d: _as_raw_value(d, "8e1e"), icon="mdi:check-decagram", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC, translation_key="boiler_ot_slave_version"),
+    XtendSensorSpec("8ecc", "xtreme_boiler_ot_slave_opentherm_version", lambda d: _as_raw_value(d, "8ecc"), icon="mdi:check-decagram", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC, translation_key="boiler_ot_protocol_version"),
+    XtendSensorSpec("8edb", "xtreme_boiler_ot_dhw_temperature", lambda d: _as_float(d, "8edb", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:water-thermometer", is_xtreme=True, translation_key="boiler_dhw_temperature"),
+    XtendSensorSpec("8ecb", "xtreme_boiler_ot_dhw_setpoint", lambda d: _as_float(d, "8ecb", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:stop-circle-outline", is_xtreme=True, translation_key="boiler_dhw_setpoint"),
+    XtendSensorSpec("8e37", "xtreme_boiler_ot_dhw_hours", lambda d: _as_int(d, "8e37"), unit="h", device_class=SensorDeviceClass.DURATION, state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:counter", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC, translation_key="boiler_dhw_hours"),
+    XtendSensorSpec("8e7f", "xtreme_boiler_ot_dhw_flowrate", lambda d: _as_float(d, "8e7f", divisor=100), unit="L/min", device_class=SensorDeviceClass.VOLUME_FLOW_RATE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:waves-arrow-right", is_xtreme=True, translation_key="boiler_dhw_flow_rate"),
+    XtendSensorSpec("8e8f", "xtreme_boiler_ot_ch_water_setpoint", lambda d: _as_float(d, "8e8f", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-auto", is_xtreme=True, translation_key="boiler_ch_water_setpoint"),
+    XtendSensorSpec("8ef9", "xtreme_boiler_ot_ch_hours", lambda d: _as_int(d, "8ef9"), unit="h", device_class=SensorDeviceClass.DURATION, state_class=SensorStateClass.TOTAL_INCREASING, icon="mdi:clock-outline", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC, translation_key="boiler_ch_hours"),
+    XtendSensorSpec("8e00", "xtreme_boiler_ot_burner_starts", lambda d: _as_raw_value(d, "8e00"), icon="mdi:counter", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC, translation_key="boiler_burner_starts"),
+    XtendSensorSpec("848e", "xtreme_boiler_ot_modulation_level_set", lambda d: _as_float(d, "848e", divisor=100), unit="%", state_class=SensorStateClass.MEASUREMENT, icon="mdi:percent-box-outline", is_xtreme=True, translation_key="boiler_modulation_setpoint"),
+    XtendSensorSpec("8434", "xtreme_boiler_ot_control_setpoint", lambda d: _as_float(d, "8434", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer", is_xtreme=True, translation_key="boiler_control_setpoint"),
+    XtendSensorSpec("84d1", "xtreme_boiler_ot_modulation_level", lambda d: _as_float(d, "84d1", divisor=100), unit="%", state_class=SensorStateClass.MEASUREMENT, icon="mdi:percent", is_xtreme=True, translation_key="boiler_modulation_level"),
+    XtendSensorSpec("844c", "xtreme_boiler_ot_ch_pressure", lambda d: _as_float(d, "844c", divisor=100), unit="bar", state_class=SensorStateClass.MEASUREMENT, icon="mdi:timeline-clock", is_xtreme=True, translation_key="boiler_ch_pressure"),
+    XtendSensorSpec("8e18", "xtreme_boiler_ot_flame_loss", lambda d: _as_int(d, "8e18"), icon="mdi:counter", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC, translation_key="boiler_flame_loss_count"),
+    XtendSensorSpec("xtreme_delta_t", "xtreme_deltaT", lambda d: _calculate_delta_t(d, "625b", "623c"), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-check", is_xtreme=True, translation_key="xtreme_delta_t"),
 ]
 
 
@@ -354,28 +237,24 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddE
     _LOGGER.info("Adding %s Xtend sensor entities for %s", len(entities), entry.entry_id)
     async_add_entities(entities)
 
-    # Optionally apply friendly display names to already-registered entities.
-    # This updates the Home Assistant entity registry so users see the new natural-language
-    # names without removing/recreating the integration. It's opt-in via the
-    # config entry options key 'rename_entities' (default True).
+    # Older versions of this integration forced a custom name onto every sensor's
+    # registry entry. A custom name takes priority over the translation-based name
+    # now used by XtendSensorEntity, so clear that legacy override once to let the
+    # translated name show through. This is a no-op for entities without one.
     try:
         from homeassistant.helpers import entity_registry as er
 
-        rename = entry.options.get("rename_entities", True) if hasattr(entry, "options") else True
-        if rename:
-            registry = er.async_get(hass)
-            for spec in SENSOR_DEFINITIONS:
-                unique_id = f"{entry.entry_id}_{spec.name}"
-                entity_id = registry.async_get_entity_id("sensor", DOMAIN, unique_id)
-                if entity_id:
-                    friendly = _friendly_sensor_name(spec.name)
-                    try:
-                        registry.async_update_entity(entity_id, name=friendly)
-                        _LOGGER.debug("Renamed entity %s -> %s", entity_id, friendly)
-                    except Exception:  # pragma: no cover - defensive
-                        _LOGGER.exception("Failed to rename entity %s to %s", entity_id, friendly)
+        registry = er.async_get(hass)
+        for spec in SENSOR_DEFINITIONS:
+            unique_id = f"{entry.entry_id}_{spec.name}"
+            entity_id = registry.async_get_entity_id("sensor", DOMAIN, unique_id)
+            if entity_id:
+                registry_entry = registry.async_get(entity_id)
+                if registry_entry is not None and registry_entry.name is not None:
+                    registry.async_update_entity(entity_id, name=None)
+                    _LOGGER.debug("Cleared legacy custom name for %s", entity_id)
     except Exception:  # pragma: no cover - defensive
-        _LOGGER.debug("Could not apply registry renames (entity_registry not available)")
+        _LOGGER.debug("Could not clear legacy entity names (entity_registry not available)")
 
 
 class XtendRawSensor(CoordinatorEntity[XtendDataUpdateCoordinator], SensorEntity):
@@ -418,7 +297,8 @@ class XtendSensorEntity(CoordinatorEntity[XtendDataUpdateCoordinator], SensorEnt
     def __init__(self, coordinator: XtendDataUpdateCoordinator, entry_id: str, spec: XtendSensorSpec, device_info: dict[str, Any] | None = None) -> None:
         super().__init__(coordinator)
         self.entity_description = spec
-        self._attr_name = _friendly_sensor_name(spec.name)
+        self._attr_has_entity_name = True
+        self._attr_translation_key = spec.translation_key
         self._attr_unique_id = f"{entry_id}_{spec.name}"
         self._attr_device_info = device_info
 

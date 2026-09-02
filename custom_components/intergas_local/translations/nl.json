@@ -1,0 +1,97 @@
+{
+  "title": "Intergas Local",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Intergas Local instellen",
+        "description": "Voer het IP-adres of de hostnaam van je Intergas-apparaat in. De integratie voegt de vereiste Xtend/Xtreme API-query automatisch toe.",
+        "data": {
+          "host": "IP-adres of host",
+          "scan_interval": "Scaninterval (seconden)"
+        }
+      }
+    },
+    "error": {
+      "invalid_host": "De host is ongeldig. Gebruik een IP-adres of hostnaam zonder pad."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Intergas Local bijwerken",
+        "description": "Werk het scaninterval voor dit apparaat bij.",
+        "data": {
+          "scan_interval": "Scaninterval (seconden)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "error_code": { "name": "Foutcode" },
+      "software_version": { "name": "Softwareversie" },
+      "current_heat_pump_power_thermal": { "name": "Huidig thermisch vermogen warmtepomp" },
+      "current_cop": { "name": "Huidige COP" },
+      "current_power_thermal": { "name": "Huidig thermisch vermogen" },
+      "current_boiler_power_thermal": { "name": "Huidig thermisch vermogen ketel" },
+      "current_power_electric": { "name": "Huidig elektrisch vermogen" },
+      "heat_pump_mode": { "name": "Warmtepompmodus" },
+      "room_temperature": { "name": "Kamertemperatuur" },
+      "heat_pump_return_temperature": { "name": "Retourtemperatuur warmtepomp" },
+      "system_flow": { "name": "Systeemdebiet" },
+      "outdoor_temperature": { "name": "Buitentemperatuur" },
+      "heat_pump_supply_temperature": { "name": "Aanvoertemperatuur warmtepomp" },
+      "electric_energy_heating": { "name": "Elektrische energie (verwarmen)" },
+      "thermal_energy_boiler": { "name": "Thermische energie (ketel)" },
+      "thermal_energy_heating": { "name": "Thermische energie (verwarmen)" },
+      "suction_temperature": { "name": "Zuigtemperatuur" },
+      "working_mode": { "name": "Werkingsmodus" },
+      "suction_pressure": { "name": "Zuigdruk" },
+      "compressor_frequency": { "name": "Compressorfrequentie" },
+      "exhaust_pressure": { "name": "Persdruk" },
+      "coil_temperature": { "name": "Spoeltemperatuur" },
+      "exhaust_temperature": { "name": "Perstemperatuur" },
+      "defrost_start_count": { "name": "Aantal ontdooicycli" },
+      "heating_start_count": { "name": "Aantal verwarmingsstarts" },
+      "heating_operation_hours": { "name": "Bedrijfsuren verwarmen" },
+      "condenser_refrigerant_gas_temperature": { "name": "Condensor koelmiddel gastemperatuur" },
+      "exhaust_overheat": { "name": "Persoververhitting" },
+      "subcooling_temperature": { "name": "Onderkoelingstemperatuur" },
+      "eev_steps": { "name": "EEV-stappen" },
+      "fan_speed": { "name": "Ventilatorsnelheid" },
+      "condenser_refrigerant_liquid_temperature": { "name": "Condensor koelmiddel vloeistoftemperatuur" },
+      "suction_overheat": { "name": "Zuigoververhitting" },
+      "power_on_count": { "name": "Aantal keer ingeschakeld" },
+      "power_on_hours": { "name": "Bedrijfsuren ingeschakeld" },
+      "requested_temperature": { "name": "Gevraagde temperatuur" },
+      "room_temperature_setpoint": { "name": "Instelling kamertemperatuur" },
+      "notification_code": { "name": "Meldingscode" },
+      "lockout_code": { "name": "Blokkeercode" },
+      "heat_demand_status": { "name": "Warmtevraagstatus" },
+      "water_pressure": { "name": "Waterdruk" },
+      "system_status": { "name": "Systeemstatus" },
+      "total_cop": { "name": "Totale COP" },
+      "delta_t": { "name": "Delta T" },
+      "total_thermal_energy": { "name": "Totale thermische energie" },
+      "boiler_supply_temperature": { "name": "Aanvoertemperatuur ketel" },
+      "boiler_return_temperature": { "name": "Retourtemperatuur ketel" },
+      "burner_status": { "name": "Branderstatus" },
+      "gas_meter_ch": { "name": "Gasmeter (CV)" },
+      "boiler_ot_slave_version": { "name": "OpenTherm-slaveversie ketel" },
+      "boiler_ot_protocol_version": { "name": "OpenTherm-protocolversie ketel" },
+      "boiler_dhw_temperature": { "name": "Warmwatertemperatuur" },
+      "boiler_dhw_setpoint": { "name": "Instelling warmwater" },
+      "boiler_dhw_hours": { "name": "Bedrijfsuren warmwater" },
+      "boiler_dhw_flow_rate": { "name": "Warmwaterdebiet" },
+      "boiler_ch_water_setpoint": { "name": "Instelling CV-water" },
+      "boiler_ch_hours": { "name": "Bedrijfsuren CV" },
+      "boiler_burner_starts": { "name": "Aantal branderstarts" },
+      "boiler_modulation_setpoint": { "name": "Instelling modulatieniveau" },
+      "boiler_control_setpoint": { "name": "Instelling regeltemperatuur" },
+      "boiler_modulation_level": { "name": "Modulatieniveau" },
+      "boiler_ch_pressure": { "name": "CV-druk" },
+      "boiler_flame_loss_count": { "name": "Aantal vlamuitvallen" },
+      "xtreme_delta_t": { "name": "Delta T" }
+    }
+  }
+}
