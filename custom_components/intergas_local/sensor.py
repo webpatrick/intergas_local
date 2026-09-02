@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import logging
+import re
 from typing import Any, Callable
 
 from homeassistant.components.sensor import (
@@ -23,6 +24,7 @@ from .const import (
     SYSTEM_STATUS,
     WORKING_MODES,
     XTREME_BURNER_STATUS,
+    build_device_infos,
 )
 from .coordinator import XtendDataUpdateCoordinator
 
@@ -30,6 +32,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class XtendSensorSpec:
+    """Static description of a single Xtend/Xtreme sensor entity."""
+
     def __init__(
         self,
         key: str,
@@ -52,16 +56,6 @@ class XtendSensorSpec:
         self.icon = icon
         self.entity_category = entity_category
         self.is_xtreme = is_xtreme
-        self.has_entity_name = True
-        self.entity_registry_enabled_default = True
-        self.entity_registry_visible_default = True
-        self.translation_key = None
-        self.native_unit_of_measurement = unit
-        self.suggested_unit_of_measurement = unit
-        self.suggested_display_precision = 1 if unit is not None else None
-        self.last_reset = None
-        self.options = None
-        self.force_update = False
 
 
 def _stats_dict(data: dict[str, Any]) -> dict[str, Any]:
@@ -125,8 +119,6 @@ def _friendly_sensor_name(name: str) -> str:
         text = text[len("xtend_"):]
 
     # Split camelCase and boundaries between letters and digits
-    import re
-
     # Add space between lower-to-upper case boundaries: fooBar -> foo Bar
     text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)
     # Add space between letter-to-digit and digit-to-letter boundaries: a1b -> a 1 b
@@ -228,7 +220,6 @@ def _friendly_sensor_name(name: str) -> str:
     out = out.replace("Currentpowerthermal", "Current power (thermal)")
 
     # Remove numeric zone/index indicators (space + digit anywhere in the name)
-    import re
     out = re.sub(r"\s+\d+", "", out)
     # Clean up any resulting double spaces
     out = " ".join(out.split())
@@ -280,7 +271,7 @@ SENSOR_DEFINITIONS: list[XtendSensorSpec] = [
     XtendSensorSpec("7ed3", "xtend_water_pressure", lambda d: _as_float(d, "7ed3", divisor=100), unit="bar", state_class=SensorStateClass.MEASUREMENT, icon="mdi:timeline-clock-outline"),
     XtendSensorSpec("77dd", "xtend_systemStatus", lambda d: _mode_name(d, "77dd", SYSTEM_STATUS), icon="mdi:power", entity_category=EntityCategory.DIAGNOSTIC),
     XtendSensorSpec("cop_total", "xtend_cop_total", lambda d: _calculate_cop(d), unit="thermal/kWh", state_class=SensorStateClass.MEASUREMENT, icon="mdi:gauge"),
-    XtendSensorSpec("delta_t", "xtend_deltaT", lambda d: _calculate_delta_t(d), unit="°C", state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-check"),
+    XtendSensorSpec("delta_t", "xtend_deltaT", lambda d: _calculate_delta_t(d, "62e7", "6280"), unit="°C", state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-check"),
     XtendSensorSpec("thermal_total", "xtend_thermal_total", lambda d: _calculate_thermal_total(d), unit="kWh", state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-lines"),
     XtendSensorSpec("625b", "xtreme_tBoilerSupply", lambda d: _as_float(d, "625b", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:water-thermometer", is_xtreme=True),
     XtendSensorSpec("623c", "xtreme_tBoilerReturn", lambda d: _as_float(d, "623c", divisor=100), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:water-thermometer-outline", is_xtreme=True),
@@ -300,14 +291,14 @@ SENSOR_DEFINITIONS: list[XtendSensorSpec] = [
     XtendSensorSpec("84d1", "xtreme_boiler_ot_modulation_level", lambda d: _as_float(d, "84d1", divisor=100), unit="%", state_class=SensorStateClass.MEASUREMENT, icon="mdi:percent", is_xtreme=True),
     XtendSensorSpec("844c", "xtreme_boiler_ot_ch_pressure", lambda d: _as_float(d, "844c", divisor=100), unit="bar", state_class=SensorStateClass.MEASUREMENT, icon="mdi:timeline-clock", is_xtreme=True),
     XtendSensorSpec("8e18", "xtreme_boiler_ot_flame_loss", lambda d: _as_int(d, "8e18"), icon="mdi:counter", is_xtreme=True, entity_category=EntityCategory.DIAGNOSTIC),
-    XtendSensorSpec("xtreme_delta_t", "xtreme_deltaT", lambda d: _calculate_xtreme_delta_t(d), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-check", is_xtreme=True),
+    XtendSensorSpec("xtreme_delta_t", "xtreme_deltaT", lambda d: _calculate_delta_t(d, "625b", "623c"), unit="°C", device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-check", is_xtreme=True),
 ]
 
 
 def _calculate_cop(data: dict[str, Any]) -> float:
     # Use the same helpers as the individual sensors (63b3 and 63f0 use _as_int)
-    elec = _as_int(data, "63b3", default=0.0)
-    therm = _as_int(data, "63f0", default=0.0)
+    elec = _as_int(data, "63b3", default=0)
+    therm = _as_int(data, "63f0", default=0)
     if elec is None or therm is None:
         return 0
     try:
@@ -320,9 +311,9 @@ def _calculate_cop(data: dict[str, Any]) -> float:
     return 0
 
 
-def _calculate_delta_t(data: dict[str, Any]) -> float:
-    supply = _as_float(data, "62e7", default=None, divisor=100)
-    return_value = _as_float(data, "6280", default=None, divisor=100)
+def _calculate_delta_t(data: dict[str, Any], supply_key: str, return_key: str) -> float:
+    supply = _as_float(data, supply_key, default=None, divisor=100)
+    return_value = _as_float(data, return_key, default=None, divisor=100)
     if supply is None or return_value is None:
         return 0.0
     try:
@@ -333,8 +324,8 @@ def _calculate_delta_t(data: dict[str, Any]) -> float:
 
 def _calculate_thermal_total(data: dict[str, Any]) -> float:
     # Use the same helpers as the individual sensors (63f0 and 63df use _as_int)
-    heating = _as_int(data, "63f0", default=0.0)
-    boiler = _as_int(data, "63df", default=0.0)
+    heating = _as_int(data, "63f0", default=0)
+    boiler = _as_int(data, "63df", default=0)
     if heating is None or boiler is None:
         return 0.0
     try:
@@ -344,48 +335,10 @@ def _calculate_thermal_total(data: dict[str, Any]) -> float:
     return round(total, 0)
 
 
-def _calculate_xtreme_delta_t(data: dict[str, Any]) -> float:
-    supply = _as_float(data, "625b", default=None, divisor=100)
-    return_value = _as_float(data, "623c", default=None, divisor=100)
-    if supply is None or return_value is None:
-        return 0.0
-    try:
-        return round(float(supply) - float(return_value), 1)
-    except (TypeError, ValueError):
-        return 0.0
-
-
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: XtendDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     host = entry.data.get("host")
-    
-    # Parent device - the integration itself (API status)
-    device_info = {
-        "identifiers": {(DOMAIN, entry.entry_id)},
-        "name": "Intergas API",
-        "manufacturer": "Intergas",
-        "model": "Local",
-    }
-    if host:
-        device_info["connections"] = {("ip", host)}
-
-    # Xtend (heatpump) as a child device
-    xtend_device_info = {
-        "identifiers": {(DOMAIN, f"{entry.entry_id}_xtend")},
-        "name": "Intergas Xtend",
-        "manufacturer": "Intergas",
-        "model": "Xtend",
-        "via_device": (DOMAIN, entry.entry_id),
-    }
-
-    # Xtreme (boiler) as a child device
-    xtreme_device_info = {
-        "identifiers": {(DOMAIN, f"{entry.entry_id}_xtreme")},
-        "name": "Intergas Xtreme",
-        "manufacturer": "Intergas",
-        "model": "Xtreme",
-        "via_device": (DOMAIN, entry.entry_id),
-    }
+    device_info, xtend_device_info, xtreme_device_info = build_device_infos(entry.entry_id, host)
 
     entities = [
         XtendRawSensor(coordinator, entry.entry_id, "Intergas Local", device_info),

@@ -5,23 +5,15 @@ from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, build_resource_url
 from .coordinator import XtendDataUpdateCoordinator
-
-STORAGE_VERSION = 1
-STORAGE_KEY = f"{DOMAIN}_offsets"
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     hass.data.setdefault(DOMAIN, {})
-    # No persistent store needed yet, but create an empty place
-    hass.data[DOMAIN]["_store"] = Store(hass, STORAGE_VERSION, STORAGE_KEY)
-    hass.data[DOMAIN]["offsets"] = {}
-
     return True
 
 

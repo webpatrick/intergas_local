@@ -7,45 +7,36 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, build_device_infos
 from .coordinator import XtendDataUpdateCoordinator
 
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: XtendDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     host = entry.data.get("host")
-    
-    # Parent device - the integration itself (API status)
-    device_info = {
-        "identifiers": {(DOMAIN, entry.entry_id)},
-        "name": "Intergas API",
-        "manufacturer": "Intergas",
-        "model": "Local",
-    }
-    if host:
-        device_info["connections"] = {("ip", host)}
-
-    # Xtend (heatpump) device
-    xtend_device_info = {
-        "identifiers": {(DOMAIN, f"{entry.entry_id}_xtend")},
-        "name": "Intergas Xtend",
-        "manufacturer": "Intergas",
-        "model": "Xtend",
-        "via_device": (DOMAIN, entry.entry_id),
-    }
-
-    # Xtreme (boiler) device
-    xtreme_device_info = {
-        "identifiers": {(DOMAIN, f"{entry.entry_id}_xtreme")},
-        "name": "Intergas Xtreme",
-        "manufacturer": "Intergas",
-        "model": "Xtreme",
-        "via_device": (DOMAIN, entry.entry_id),
-    }
+    _device_info, xtend_device_info, xtreme_device_info = build_device_infos(entry.entry_id, host)
 
     async_add_entities([
-        XtendActiveBinarySensor(coordinator, entry.entry_id, xtend_device_info),
-        XtremeActiveBinarySensor(coordinator, entry.entry_id, xtreme_device_info)
+        DeltaTActiveBinarySensor(
+            coordinator,
+            entry.entry_id,
+            unique_id_suffix="xtend_active_check",
+            flow_key="629c",  # fSystem
+            supply_key="62e7",  # tHpSupply
+            return_key="6280",  # tHpReturn
+            source="xtend_deltaT",
+            device_info=xtend_device_info,
+        ),
+        DeltaTActiveBinarySensor(
+            coordinator,
+            entry.entry_id,
+            unique_id_suffix="xtreme_active_check",
+            flow_key="8e7f",  # boiler_ot_dhw_flowrate
+            supply_key="625b",  # tBoilerSupply
+            return_key="623c",  # tBoilerReturn
+            source="xtreme_deltaT",
+            device_info=xtreme_device_info,
+        ),
     ])
 
 
@@ -61,75 +52,51 @@ def _flow_value(data: dict[str, object], key: str) -> float | None:
         return None
 
 
-class XtendActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], BinarySensorEntity):
-    """Xtend (Heatpump) active check: flow must be present and supply - return > 0.5°C"""
-    
-    def __init__(self, coordinator: XtendDataUpdateCoordinator, entry_id: str, device_info: dict | None = None) -> None:
+class DeltaTActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], BinarySensorEntity):
+    """Generic "is active" check: flow (if known) must be > 0 and supply - return > 0.5°C."""
+
+    def __init__(
+        self,
+        coordinator: XtendDataUpdateCoordinator,
+        entry_id: str,
+        *,
+        unique_id_suffix: str,
+        flow_key: str,
+        supply_key: str,
+        return_key: str,
+        source: str,
+        device_info: dict | None = None,
+    ) -> None:
         super().__init__(coordinator)
         self._attr_name = "Is Active"
-        self._attr_unique_id = f"{entry_id}_xtend_active_check"
+        self._attr_unique_id = f"{entry_id}_{unique_id_suffix}"
         self._attr_icon = "mdi:fire-off"
         self._attr_device_info = device_info
+        self._flow_key = flow_key
+        self._supply_key = supply_key
+        self._return_key = return_key
+        self._source = source
 
     @property
     def is_on(self) -> bool:
-        if not isinstance(self.coordinator.data, dict):
+        data = self.coordinator.data
+        if not isinstance(data, dict):
             return False
 
-        flow = _flow_value(self.coordinator.data, "629c")
+        flow = _flow_value(data, self._flow_key)
         if flow is not None and flow <= 0:
             return False
 
         try:
-            # 62e7 = tHpSupply, 6280 = tHpReturn
-            supply = float(str(self.coordinator.data.get("62e7", 0))) / 100
-            return_value = float(str(self.coordinator.data.get("6280", 0))) / 100
+            supply = float(str(data.get(self._supply_key, 0))) / 100
+            return_value = float(str(data.get(self._return_key, 0))) / 100
         except (TypeError, ValueError):
             return False
 
-        delta_t = supply - return_value
-        if flow is None:
-            return delta_t > 0.5
-        return delta_t > 0.5
+        return (supply - return_value) > 0.5
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        return {"source": "xtend_deltaT"}
-
-
-class XtremeActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], BinarySensorEntity):
-    """Xtreme (Boiler) active check: when flow is known it must be > 0 before a delta is considered active."""
-    
-    def __init__(self, coordinator: XtendDataUpdateCoordinator, entry_id: str, device_info: dict | None = None) -> None:
-        super().__init__(coordinator)
-        self._attr_name = "Is Active"
-        self._attr_unique_id = f"{entry_id}_xtreme_active_check"
-        self._attr_icon = "mdi:fire-off"
-        self._attr_device_info = device_info
-
-    @property
-    def is_on(self) -> bool:
-        if not isinstance(self.coordinator.data, dict):
-            return False
-
-        flow = _flow_value(self.coordinator.data, "8e7f")
-        if flow is not None and flow <= 0:
-            return False
-
-        try:
-            # 625b = tBoilerSupply, 623c = tBoilerReturn
-            supply = float(str(self.coordinator.data.get("625b", 0))) / 100
-            return_value = float(str(self.coordinator.data.get("623c", 0))) / 100
-        except (TypeError, ValueError):
-            return False
-
-        delta_t = supply - return_value
-        if flow is None:
-            return delta_t > 0.5
-        return delta_t > 0.5
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any] | None:
-        return {"source": "xtreme_deltaT"}
+        return {"source": self._source}
 
 
