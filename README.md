@@ -2,15 +2,14 @@
 
 <img width="250" height="250" alt="icon" src="https://github.com/user-attachments/assets/a961693c-f915-44af-b071-ff75c62b876d" />
 
-A Home Assistant custom integration for the Intergas Xtend / Xtreme local API.
+A Home Assistant custom integration for the Intergas Xtend / Xtreme local API (Xtore not supported).
 
-This integration is based on the same local-access approach described in [HA_connection_Xtend](https://github.com/DSchoutsen/HA_connection_Xtend): the Home Assistant instance connects directly to the Xtend unit over its local HTTP API instead of using a cloud service.
-
-It is designed for setups where the heat pump is only reachable on its own local network, which means Home Assistant usually needs a dedicated Wi‑Fi adapter or a separate Wi‑Fi network path to the Xtend controller.
+This integration is based on the same local-access approach described in [HA_connection_Xtend](https://github.com/DSchoutsen/HA_connection_Xtend): the Home Assistant instance connects directly to the Xtend unit over its local HTTP API. It exposes several sensors/diagnostics regarding the Xtend and Xtreme.
 
 ## Why this integration exists
 
-The Intergas Xtend system exposes operational data through a local API on the unit. This integration polls that API directly and exposes the most relevant system values in Home Assistant as entities.
+The [HA_connection_Xtend](https://github.com/DSchoutsen/HA_connection_Xtend) works with yaml files for RESTful sensors and sensor-templates and had no specific devices available in Home Asssistant showing all the sensors and diagnostics.
+So I made an HACS integration doing practically the same but less complicated.
 
 ## Important: dedicated Wi‑Fi requirement
 
