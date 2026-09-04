@@ -20,7 +20,7 @@ This is important because the Xtend API is typically reachable only through a de
 
 This is the same principle used in the original HA_connection_Xtend setup.
 
-<img width="1024" height="419" alt="image" src="https://github.com/user-attachments/assets/1f496b9f-d41b-4765-939e-175d17f7be27" />
+<img width="1024" height="419" alt="image" src="https://github.com/user-attachments/assets/3ef1e674-be30-4cef-be72-15ed89ecf3c2" />
 
 ## Installation
 
