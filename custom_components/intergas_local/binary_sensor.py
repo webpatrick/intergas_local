@@ -31,7 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddE
             coordinator,
             entry.entry_id,
             unique_id_suffix="xtreme_active_check",
-            flow_key="8e7f",  # boiler_ot_dhw_flowrate
+            flow_key=None,
             supply_key="625b",  # tBoilerSupply
             return_key="623c",  # tBoilerReturn
             source="xtreme_deltaT",
@@ -40,14 +40,24 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddE
     ])
 
 
-def _flow_value(data: dict[str, object], key: str) -> float | None:
+def _stats_dict(data: dict[str, object]) -> dict[str, object]:
     if not isinstance(data, dict):
-        return None
-    raw = data.get(key)
+        return {}
+    stats = data.get("stats")
+    if isinstance(stats, dict):
+        return stats
+    return data
+
+
+def _scaled_float_value(data: dict[str, object], key: str, divisor: float = 100) -> float | None:
+    stats = _stats_dict(data)
+    raw = stats.get(key)
     if raw is None:
         return None
+    if isinstance(raw, str) and not raw.strip():
+        return None
     try:
-        return float(str(raw)) / 100
+        return float(str(raw)) / divisor
     except (TypeError, ValueError):
         return None
 
@@ -61,7 +71,7 @@ class DeltaTActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], Bi
         entry_id: str,
         *,
         unique_id_suffix: str,
-        flow_key: str,
+        flow_key: str | None,
         supply_key: str,
         return_key: str,
         source: str,
@@ -78,25 +88,42 @@ class DeltaTActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], Bi
         self._return_key = return_key
         self._source = source
 
-    @property
-    def is_on(self) -> bool:
+    def _active_debug_values(self) -> dict[str, Any]:
         data = self.coordinator.data
         if not isinstance(data, dict):
-            return False
+            return {
+                "source": self._source,
+                "has_data": False,
+            }
 
-        flow = _flow_value(data, self._flow_key)
-        if flow is not None and flow <= 0:
-            return False
+        flow = _scaled_float_value(data, self._flow_key) if self._flow_key else None
+        supply = _scaled_float_value(data, self._supply_key)
+        return_value = _scaled_float_value(data, self._return_key)
+        delta_t = None if supply is None or return_value is None else round(supply - return_value, 2)
 
-        try:
-            supply = float(str(data.get(self._supply_key, 0))) / 100
-            return_value = float(str(data.get(self._return_key, 0))) / 100
-        except (TypeError, ValueError):
-            return False
+        has_temps = supply is not None and return_value is not None
+        flow_ok = True if flow is None else flow > 0
+        delta_ok = bool(delta_t is not None and delta_t > 0.5)
 
-        return (supply - return_value) > 0.5
+        return {
+            "source": self._source,
+            "has_data": True,
+            "flow_l_min": flow,
+            "supply_c": supply,
+            "return_c": return_value,
+            "delta_t_c": delta_t,
+            "delta_t_threshold_c": 0.5,
+            "flow_required": self._flow_key is not None,
+            "flow_ok": flow_ok,
+            "delta_t_ok": delta_ok,
+            "has_temperatures": has_temps,
+            "is_active_evaluated": has_temps and flow_ok and delta_ok,
+        }
+
+    @property
+    def is_on(self) -> bool:
+        return bool(self._active_debug_values().get("is_active_evaluated", False))
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        return {"source": self._source}
-
+        return self._active_debug_values()
