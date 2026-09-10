@@ -1,4 +1,4 @@
-# Intergas Local
+# HA Intergas Local
 
 <img width="250" height="250" alt="icon" src="https://github.com/user-attachments/assets/a961693c-f915-44af-b071-ff75c62b876d" />
 
