@@ -77,7 +77,7 @@
           "sensortest": "Sensortest",
           "commissioning": "Inbedrijfstelling",
           "crankheating": "Carterverwarming",
-          "ch": "CV",
+          "ch": "CV (verwarmen)",
           "ch_wait": "CV (wachten)",
           "defrosting": "Ontdooien",
           "starting_cooling": "Koelen starten",
