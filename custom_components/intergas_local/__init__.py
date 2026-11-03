@@ -22,9 +22,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     host = entry.data.get("host")
-    resource = entry.data.get("resource")
-    if not resource and host:
-        resource = build_resource_url(host)
+    # Rebuild from host so newly added API codes are requested for existing entries
+    resource = build_resource_url(host) if host else entry.data.get("resource")
     if not resource:
         raise ValueError("No host or resource configured for Xtend Local")
 

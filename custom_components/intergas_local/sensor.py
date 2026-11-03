@@ -116,6 +116,7 @@ def _mode_name(data: dict[str, Any], key: str, lookup: dict[int, str]) -> str | 
 SENSOR_DEFINITIONS: list[XtendSensorSpec] = [
     XtendSensorSpec("4133", "xtend_errorCode", lambda d: _mode_name(d, "4133", ERROR_CODES), icon="mdi:alert-circle-outline", entity_category=EntityCategory.DIAGNOSTIC, translation_key="error_code"),
     XtendSensorSpec("47e0", "xtend_software_version", lambda d: _as_raw_value(d, "47e0"), entity_category=EntityCategory.DIAGNOSTIC, translation_key="software_version"),
+    XtendSensorSpec("f9f2", "xtend_f9f2", lambda d: _as_raw_value(d, "f9f2"), icon="mdi:flag-outline", entity_category=EntityCategory.DIAGNOSTIC, translation_key="status_flags"),
     XtendSensorSpec("503e", "xtend_currentHpPowerThermal", lambda d: _as_float(d, "503e", divisor=1000), unit="kW", device_class=SensorDeviceClass.POWER, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-lines", translation_key="current_heat_pump_power_thermal"),
     XtendSensorSpec("5041", "xtend_currentCop", lambda d: _as_float(d, "5041", divisor=10), unit="thermal/kWh", state_class=SensorStateClass.MEASUREMENT, icon="mdi:gauge", translation_key="current_cop"),
     XtendSensorSpec("5077", "xtend_currentPowerThermal", lambda d: _as_float(d, "5077", divisor=1000), unit="kW", device_class=SensorDeviceClass.POWER, state_class=SensorStateClass.MEASUREMENT, icon="mdi:thermometer-lines", translation_key="current_power_thermal"),
@@ -296,6 +297,20 @@ class XtendSensorEntity(CoordinatorEntity[XtendDataUpdateCoordinator], SensorEnt
         if value is not None:
             _LOGGER.debug("Xtend sensor %s resolved value=%s", self.entity_description.key, value)
         return value
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        if self.entity_description.key != "f9f2":
+            return None
+        value = self.native_value
+        try:
+            number = int(str(value))
+        except (TypeError, ValueError):
+            return None
+        return {
+            "binary": format(number, "016b"),
+            "bits_set": [bit for bit in range(16) if number >> bit & 1],
+        }
 
     @property
     def icon(self) -> str | None:
