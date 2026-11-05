@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from homeassistant.components.sensor import (
-    EntityCategory,
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
@@ -24,6 +23,7 @@ from .const import (
     SYSTEM_STATUS,
     WORKING_MODES,
     XTREME_BURNER_STATUS,
+    EntityCategory,
     build_device_infos,
 )
 from .coordinator import XtendDataUpdateCoordinator
