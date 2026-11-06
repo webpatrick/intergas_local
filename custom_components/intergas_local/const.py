@@ -193,6 +193,11 @@ XTREME_BURNER_STATUS = {
     128: "Lockout",
 }
 
+# Bits of f9f2 (bivalent_service_flags), derived empirically from observed values:
+# 8 = idle (bit 3), 152 = heat pump only, 412 = heat pump + boiler.
+HEAT_PUMP_DEMAND_MASK = (1 << 4) | (1 << 7)
+BOILER_DEMAND_MASK = (1 << 2) | (1 << 8)
+
 API_CODES = [
     "4133",
     "47e0",
@@ -254,6 +259,7 @@ API_CODES = [
     "8ecc",
     "8edb",
     "8ef9",
+    "f9f2",
 ]
 
 

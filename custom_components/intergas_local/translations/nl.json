@@ -30,6 +30,7 @@
     "sensor": {
       "error_code": { "name": "Foutcode" },
       "software_version": { "name": "Softwareversie" },
+      "status_flags": { "name": "Statusvlaggen" },
       "current_heat_pump_power_thermal": { "name": "Huidig thermisch vermogen warmtepomp" },
       "current_cop": { "name": "Huidige COP" },
       "current_power_thermal": { "name": "Huidig thermisch vermogen" },
@@ -122,7 +123,9 @@
       "xtreme_delta_t": { "name": "Delta T" }
     },
     "binary_sensor": {
-      "is_active": { "name": "Is actief" }
+      "is_active": { "name": "Is actief" },
+      "heat_pump_demand": { "name": "Warmtevraag warmtepomp" },
+      "boiler_demand": { "name": "Warmtevraag cv-ketel" }
     }
   }
 }

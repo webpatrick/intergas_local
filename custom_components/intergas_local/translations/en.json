@@ -30,6 +30,7 @@
     "sensor": {
       "error_code": { "name": "Error code" },
       "software_version": { "name": "Software version" },
+      "status_flags": { "name": "Status flags" },
       "current_heat_pump_power_thermal": { "name": "Current heat pump thermal power" },
       "current_cop": { "name": "Current COP" },
       "current_power_thermal": { "name": "Current thermal power" },
@@ -122,7 +123,9 @@
       "xtreme_delta_t": { "name": "Delta T" }
     },
     "binary_sensor": {
-      "is_active": { "name": "Is active" }
+      "is_active": { "name": "Is active" },
+      "heat_pump_demand": { "name": "Heat pump demand" },
+      "boiler_demand": { "name": "Boiler demand" }
     }
   }
 }
