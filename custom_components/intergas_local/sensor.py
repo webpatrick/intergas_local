@@ -4,8 +4,13 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from homeassistant.components.sensor import (
+from homeassistant.const import (
+    CONF_HOST,
+    CONF_NAME,
     EntityCategory,
+)
+
+from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
