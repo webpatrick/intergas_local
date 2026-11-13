@@ -193,6 +193,23 @@ XTREME_BURNER_STATUS = {
     128: "Lockout",
 }
 
+# Observed values of f9f2 (bivalent_service_flags); meanings derived empirically.
+# Bit 3 is always set, bit 7 = heat pump demand, bits 2/8 = boiler demand,
+# bits 9+11 = boiler firing, bit 14 = defrosting.
+F9F2_STATUS = {
+    8: "Idle",
+    136: "Heat pump demand",
+    152: "Heat pump active",
+    412: "Heat pump and boiler demand",
+    2972: "Heat pump and boiler firing",
+    16776: "Defrost, boiler demand",
+    16792: "Defrost, boiler demand",
+    16796: "Defrost, boiler demand",
+    19336: "Defrost, boiler firing",
+    19352: "Defrost, boiler firing",
+    19356: "Defrost, boiler firing",
+}
+
 # Bits of f9f2 (bivalent_service_flags), derived empirically from observed values:
 # 8 = idle (bit 3), 152 = heat pump only, 412 = heat pump + boiler.
 HEAT_PUMP_DEMAND_MASK = (1 << 4) | (1 << 7)
