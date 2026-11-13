@@ -30,7 +30,19 @@
     "sensor": {
       "error_code": { "name": "Foutcode" },
       "software_version": { "name": "Softwareversie" },
-      "status_flags": { "name": "Statusvlaggen" },
+      "status_flags": {
+        "name": "Statusvlaggen",
+        "state": {
+          "idle": "Inactief",
+          "heat_pump_demand": "Warmtevraag warmtepomp",
+          "heat_pump_active": "Warmtepomp actief",
+          "heat_pump_boiler_demand": "Warmtepomp en ketel vragen warmte",
+          "heat_pump_boiler_firing": "Warmtepomp en ketel stookt",
+          "defrost_boiler_demand": "Ontdooien, ketel vraagt warmte",
+          "defrost_boiler_firing": "Ontdooien, ketel stookt",
+          "unknown": "Onbekend"
+        }
+      },
       "current_heat_pump_power_thermal": { "name": "Huidig thermisch vermogen warmtepomp" },
       "current_cop": { "name": "Huidige COP" },
       "current_power_thermal": { "name": "Huidig thermisch vermogen" },

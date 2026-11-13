@@ -197,18 +197,20 @@ XTREME_BURNER_STATUS = {
 # Bit 3 is always set, bit 7 = heat pump demand, bits 2/8 = boiler demand,
 # bits 9+11 = boiler firing, bit 14 = defrosting.
 F9F2_STATUS = {
-    8: "Idle",
-    136: "Heat pump demand",
-    152: "Heat pump active",
-    412: "Heat pump and boiler demand",
-    2972: "Heat pump and boiler firing",
-    16776: "Defrost, boiler demand",
-    16792: "Defrost, boiler demand",
-    16796: "Defrost, boiler demand",
-    19336: "Defrost, boiler firing",
-    19352: "Defrost, boiler firing",
-    19356: "Defrost, boiler firing",
+    8: "idle",
+    136: "heat_pump_demand",
+    152: "heat_pump_active",
+    412: "heat_pump_boiler_demand",
+    2972: "heat_pump_boiler_firing",
+    16776: "defrost_boiler_demand",
+    16792: "defrost_boiler_demand",
+    16796: "defrost_boiler_demand",
+    19336: "defrost_boiler_firing",
+    19352: "defrost_boiler_firing",
+    19356: "defrost_boiler_firing",
 }
+F9F2_UNKNOWN = "unknown"
+F9F2_OPTIONS = list(dict.fromkeys(F9F2_STATUS.values())) + [F9F2_UNKNOWN]
 
 # Bits of f9f2 (bivalent_service_flags), derived empirically from observed values:
 # 8 = idle (bit 3), 152 = heat pump only, 412 = heat pump + boiler.

@@ -30,7 +30,19 @@
     "sensor": {
       "error_code": { "name": "Error code" },
       "software_version": { "name": "Software version" },
-      "status_flags": { "name": "Status flags" },
+      "status_flags": {
+        "name": "Status flags",
+        "state": {
+          "idle": "Idle",
+          "heat_pump_demand": "Heat pump demand",
+          "heat_pump_active": "Heat pump active",
+          "heat_pump_boiler_demand": "Heat pump and boiler demand",
+          "heat_pump_boiler_firing": "Heat pump and boiler firing",
+          "defrost_boiler_demand": "Defrost, boiler demand",
+          "defrost_boiler_firing": "Defrost, boiler firing",
+          "unknown": "Unknown"
+        }
+      },
       "current_heat_pump_power_thermal": { "name": "Current heat pump thermal power" },
       "current_cop": { "name": "Current COP" },
       "current_power_thermal": { "name": "Current thermal power" },
