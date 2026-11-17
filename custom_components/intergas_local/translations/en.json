@@ -33,13 +33,13 @@
       "status_flags": {
         "name": "Status flags",
         "state": {
-          "idle": "Idle",
-          "heat_pump_demand": "Heat pump demand",
-          "heat_pump_active": "Heat pump active",
-          "heat_pump_boiler_demand": "Heat pump and boiler demand",
-          "heat_pump_boiler_firing": "Heat pump and boiler firing",
-          "defrost_boiler_demand": "Defrost, boiler demand",
-          "defrost_boiler_firing": "Defrost, boiler firing",
+          "idle": "No heat demand",
+          "heat_pump_demand": "Heat pump requesting heat",
+          "heat_pump_active": "Heat pump running",
+          "heat_pump_boiler_demand": "Heat pump running, boiler requesting heat",
+          "heat_pump_boiler_firing": "Heat pump running, boiler firing",
+          "defrost_boiler_demand": "Defrosting, boiler requesting heat",
+          "defrost_boiler_firing": "Defrosting, boiler firing",
           "unknown": "Unknown"
         }
       },

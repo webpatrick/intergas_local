@@ -33,13 +33,13 @@
       "status_flags": {
         "name": "Statusvlaggen",
         "state": {
-          "idle": "Inactief",
-          "heat_pump_demand": "Warmtevraag warmtepomp",
-          "heat_pump_active": "Warmtepomp actief",
-          "heat_pump_boiler_demand": "Warmtepomp en ketel vragen warmte",
-          "heat_pump_boiler_firing": "Warmtepomp en ketel stookt",
+          "idle": "Geen warmtevraag",
+          "heat_pump_demand": "Warmtepomp vraagt warmte",
+          "heat_pump_active": "Warmtepomp in bedrijf",
+          "heat_pump_boiler_demand": "Warmtepomp in bedrijf, ketel vraagt warmte",
+          "heat_pump_boiler_firing": "Warmtepomp en ketel in bedrijf",
           "defrost_boiler_demand": "Ontdooien, ketel vraagt warmte",
-          "defrost_boiler_firing": "Ontdooien, ketel stookt",
+          "defrost_boiler_firing": "Ontdooien, ketel in bedrijf",
           "unknown": "Onbekend"
         }
       },
