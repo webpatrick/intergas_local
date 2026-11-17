@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, build_device_infos
+from .const import BOILER_DEMAND_MASK, DOMAIN, HEAT_PUMP_DEMAND_MASK, build_device_infos
 from .coordinator import XtendDataUpdateCoordinator
 
 
@@ -17,6 +17,24 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities: AddE
     _device_info, xtend_device_info, xtreme_device_info = build_device_infos(entry.entry_id, host)
 
     async_add_entities([
+        FlagDemandBinarySensor(
+            coordinator,
+            entry.entry_id,
+            unique_id_suffix="xtend_heat_pump_demand",
+            translation_key="heat_pump_demand",
+            mask=HEAT_PUMP_DEMAND_MASK,
+            icon="mdi:heat-pump",
+            device_info=xtend_device_info,
+        ),
+        FlagDemandBinarySensor(
+            coordinator,
+            entry.entry_id,
+            unique_id_suffix="xtend_boiler_demand",
+            translation_key="boiler_demand",
+            mask=BOILER_DEMAND_MASK,
+            icon="mdi:water-boiler",
+            device_info=xtend_device_info,
+        ),
         DeltaTActiveBinarySensor(
             coordinator,
             entry.entry_id,
@@ -60,6 +78,47 @@ def _scaled_float_value(data: dict[str, object], key: str, divisor: float = 100)
         return float(str(raw)) / divisor
     except (TypeError, ValueError):
         return None
+
+
+class FlagDemandBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], BinarySensorEntity):
+    """Heat demand derived from bits of the f9f2 (bivalent_service_flags) register."""
+
+    def __init__(
+        self,
+        coordinator: XtendDataUpdateCoordinator,
+        entry_id: str,
+        *,
+        unique_id_suffix: str,
+        translation_key: str,
+        mask: int,
+        icon: str,
+        device_info: dict | None = None,
+    ) -> None:
+        super().__init__(coordinator)
+        self._attr_has_entity_name = True
+        self._attr_translation_key = translation_key
+        self._attr_unique_id = f"{entry_id}_{unique_id_suffix}"
+        self._attr_icon = icon
+        self._attr_device_info = device_info
+        self._mask = mask
+
+    def _flags(self) -> int | None:
+        raw = _stats_dict(self.coordinator.data).get("f9f2")
+        try:
+            return int(str(raw).strip())
+        except (TypeError, ValueError):
+            return None
+
+    @property
+    def available(self) -> bool:
+        return super().available and self._flags() is not None
+
+    @property
+    def is_on(self) -> bool | None:
+        flags = self._flags()
+        if flags is None:
+            return None
+        return bool(flags & self._mask)
 
 
 class DeltaTActiveBinarySensor(CoordinatorEntity[XtendDataUpdateCoordinator], BinarySensorEntity):
